@@ -43,6 +43,7 @@ references/
   lipsync.md                     real lipsync paths + the verification step that matters
   audio-music.md                 background music/SFX generation
   davinci-resolve.md             MCP setup, assembly workflow, production gotchas
+  remotion.md                    burned-in captions, title cards, data-driven overlays
   self-check.md                  the QA checklist run between every phase
   shotlist-format.md             the manifest schema that drives the pipeline
 scripts/

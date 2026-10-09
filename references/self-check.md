@@ -42,6 +42,7 @@ ffprobe -v error -show_streams -select_streams a merged.mp4
 - [ ] **Render and look at actual frames from the timeline itself**, not the source clips — a file-relink issue, a wrong-track placement, or a gap can all produce a timeline that looks correct from the API's perspective (clip metadata, in/out points all report as expected) while actually rendering wrong or corrupted on screen. Capture a frame at the start of each shot's span and look at it.
 - [ ] Scan for gaps and overlaps across every track — these accumulate silently across multiple editing passes and won't surface until playback.
 - [ ] Confirm aspect ratio and resolution are consistent for the whole timeline, not just the shots checked individually.
+- [ ] If driving Resolve via `samuelgursky/davinci-resolve-mcp`, run its own project-health pre-flight before calling assembly done: `project_manager(action="lint")` → `{ok, counts, issues}`. It catches structural problems (mixed frame rates across timelines, an empty timeline, offline media, unset render format) that a frame-by-frame visual check won't surface. See `references/davinci-resolve.md`.
 
 ## When to stop and change approach instead of retrying
 

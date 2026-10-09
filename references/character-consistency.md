@@ -26,6 +26,19 @@ print(m.latest_version.openapi_schema["components"]["schemas"]["Input"]["propert
 
 Don't guess a field name (e.g. assuming `reference_image` when the model actually expects `subject`) — a wrong field name fails loudly, but a *near-right* one can silently degrade quality instead of erroring.
 
+Also: calling a model by bare `"owner/name"` can 404 if it has no default deployment pinned — get the explicit version first and call `"owner/name:version_id"`:
+
+```python
+m = replicate.models.get("fofr/consistent-character")
+output = replicate.run(f"fofr/consistent-character:{m.latest_version.id}", input={...})
+```
+
+**`fofr/consistent-character` confirmed, 2/2 test outputs: bakes in a fake stock-photo watermark** (Getty-Images-style gibberish text overlay) even with `"watermark, text"` explicitly in `negative_prompt` — the negative prompt did not suppress it. Treat this as a known defect of this specific model as of 2026-10-09, not something fixable by prompt tuning.
+
+**Confirmed fix: use `bytedance/flux-pulid` instead** — same InstantID/PuLID-family identity-lock technique, tested clean (0/2 outputs watermarked) with the same subject photo. Its reference-image field is named `main_face_image`, not `subject`/`image` — check the schema, don't assume. Useful params: `id_weight` (0-3, how strongly identity is enforced — 1.5 held identity well without flattening the generated pose/lighting), `true_cfg` (set >1.0 for stronger prompt adherence), `width`/`height` (set to match your project's aspect ratio directly, e.g. 768x1344 for 9:16 — it does not infer aspect ratio from the reference image the way some video models do). **This is now the preferred identity-lock model over `consistent-character`** — treat `consistent-character` as a fallback only, and still inspect its output for the watermark defect if used.
+
+General lesson beyond this one model: a negative prompt is not a guarantee — some models/techniques ignore it for specific hallucination patterns (fake watermarks, garbled text) baked deep into their training data. When a negative prompt demonstrably fails to suppress a defect across multiple attempts, the fix is switching models/techniques, not more negative-prompt tuning on the same model.
+
 **Image-to-image refinement** (`flux-dev`'s `image` + `prompt_strength` input) is the lighter-weight option: feed an existing approved image back in with a prompt describing the one thing you want changed, at a moderate `prompt_strength` (~0.4–0.6) so structure/identity is mostly preserved while the specific element updates. Good for small corrections to an already-good reference; not a substitute for the identity-lock models when you need the *same* character in a genuinely different scene.
 
 ## Locking a character: the actual workflow
@@ -57,3 +70,12 @@ Once each character has a locked solo reference, a scene with two or more of the
 A locked character reference is the *identity* anchor, not necessarily the *shot* reference. If a shot needs a pose, composition, or framing meaningfully different from the locked portrait (a two-shot at a table vs. a solo close-up, a character reaching across a table vs. sitting still), generate a dedicated reference for that specific shot — seeded from the locked identity via an identity-lock model or image-to-image, not re-described from scratch, and not borrowed wholesale from a different shot's reference just because it's roughly close.
 
 Reusing shot A's reference image for shot B because "it's basically the same scene" is how a wide establishing shot, a phone-reveal reaction shot, and a hand-off shot all end up looking confusingly identical, or worse, how a correct reference for one narrative beat gets animated into motion that doesn't match what's actually supposed to happen in a different shot. Generate per-shot; it's cheaper than the rework.
+
+## Watermark/logo hallucination: expect it, don't fight it with wording alone
+
+Across independent testing, roughly **30% of generations from models trained on scraped stock-photo data can carry an unwanted hallucinated logo or watermark-style text artifact** — confirmed directly in this project (`fofr/consistent-character` baked in a fake Getty-Images-style watermark on 2/2 test outputs, ignoring an explicit `"watermark, text"` negative prompt both times). This is a training-data artifact, not a prompting gap, and the fix is **not** more negative-prompt tuning on the same model/seed.
+
+Practical response, in order:
+1. **Reroll the seed and regenerate** — if the model/technique is otherwise working, a different seed often avoids the artifact without changing anything else about the generation.
+2. **If a specific model/technique shows the defect repeatedly** (not just once), switch models rather than keep rerolling — e.g. `bytedance/flux-pulid` tested clean (0/2) on the same reference image and prompt that produced a watermark 2/2 on `consistent-character`. Some models are simply cleaner on this axis than others; find out which before committing to one for a whole project.
+3. **Always visually inspect before using an image as a seed for anything downstream** (a video generation, a lipsync pass) — a watermarked reference image propagates into every clip generated from it, turning one bad still into a whole shot's worth of wasted video generation. This is the same "look at the actual output, not just that the call succeeded" discipline as `references/self-check.md` — apply it here specifically, since this defect is easy to miss at a glance if the watermark is small or low-contrast against the background.

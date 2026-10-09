@@ -45,6 +45,12 @@ If your constraints keep you in Replicate for video (silent clip already generat
 
 All three exist and work as of 2026-10-09 — but **Replicate model IDs and versions drift over time** (confirmed: two unrelated video models on Replicate were found pointing at deleted/stale versions within the same month). Before trusting a model id in any doc including this one, check the live schema:
 
+## Path 3: self-hosted SadTalker
+
+A fourth option if neither ElevenLabs nor a Replicate lipsync model fits (cost control at scale, no third-party API dependency, or you already run your own GPU infra): **SadTalker**, self-hosted on your own GPU (Modal, RunPod, or local). Same underlying limitation as the hosted options — sync quality degrades past roughly a 30° turned face, so the front-facing framing advice below still applies regardless of which path you pick. Worth it mainly when generation volume is high enough that per-clip hosted-API cost matters more than setup effort; for occasional/low-volume work, Path 1 or 2 is less to maintain.
+
+**A real alternative when lipsync precision genuinely doesn't matter for a shot**: skip lipsync entirely and use plain image-to-video motion (a character gesturing, reacting, moving naturally with mouth closed or only vaguely moving) for stylized characters, non-dialogue atmosphere beats, or brief cameo lines where the audience's attention is on something else in frame. Don't reach for this as a cost-cutting shortcut on a shot that's actually supposed to read as the character speaking a specific line — that's the exact mistake this doc exists to prevent — but it's a legitimate choice for a shot that was never going to need tight sync in the first place.
+
 ```python
 import replicate
 m = replicate.models.get("sync/lipsync-2-pro")
@@ -86,12 +92,13 @@ Lipsync models can glitch on a turned or profile face — the mouth sync degrade
 ## Decision tree
 
 ```
-Does this shot have spoken dialogue?
-├── No  → any video model, no lipsync needed
+Does this shot have spoken dialogue that the audience needs to read as sync'd?
+├── No / doesn't matter for this shot → any video model, no lipsync needed (motion-only is fine)
 └── Yes → Can the project use ElevenLabs beyond plain TTS?
           ├── Yes → Avatar + Lip Sync workspace (Path 1)
           └── No, Replicate-only constraint, or audio already generated elsewhere
-                 → generate silent video + audio separately, then
-                   Replicate lipsync bridge (Path 2) — verify embedded
-                   audio stream on every output before trusting it
+                 ├── Occasional/low volume → Replicate lipsync bridge (Path 2) —
+                 │     verify embedded audio stream on every output before trusting it
+                 └── High volume, cost/infra control matters → self-hosted
+                       SadTalker (Path 3), same verification discipline applies
 ```

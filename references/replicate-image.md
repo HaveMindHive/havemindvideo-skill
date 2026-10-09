@@ -25,15 +25,17 @@ Re-describing a character's full physical appearance in a fresh text prompt and 
 
 Use a face-reference model that takes one approved photo of a character plus a new prompt/pose and generates a new image that actually preserves the face:
 
-- **`fofr/consistent-character`** — built for exactly this: one reference image in, new poses/scenes out, same face.
-- **`bytedance/flux-pulid`** — PuLID-based identity-preserving generation on top of Flux.
+- **`bytedance/flux-pulid`** (preferred) — PuLID-based identity-preserving generation on top of Flux. Reference image field is `main_face_image`. Tested clean, 0/2 outputs with a stock-photo watermark artifact. Set `width`/`height` explicitly to match your project's aspect ratio — it does not infer this from the reference image.
+- **`fofr/consistent-character`** — same category of tool, but **confirmed 2/2 test outputs baked in a fake Getty-Images-style watermark**, and `negative_prompt` did not suppress it. Treat as a fallback only, and inspect every output for this defect if used — don't assume a negative prompt protects you here.
 
 Both work by feeding a real reference image into the model (via IPAdapter/InstantID/PuLID-style conditioning) rather than relying on the prompt alone to carry identity. Introspect their current input schemas before calling — exact field names (e.g. which key takes the reference image, what the pose/prompt field is called) vary by model and are not worth guessing:
 
 ```python
-v = replicate.models.get("fofr/consistent-character").latest_version
+v = replicate.models.get("bytedance/flux-pulid").latest_version
 print(json.dumps(v.openapi_schema["components"]["schemas"]["Input"]["properties"], indent=2))
 ```
+
+Also: call with an explicit pinned version (`"owner/name:version_id"`), not just `"owner/name"` — some models 404 on the bare form if no default deployment is configured.
 
 This is the right tool whenever the task is "give me this exact character in a new pose/outfit/scene" — which is most of what a shot list needs. Reserve plain flux-pro/dev prompting for the character's very first reference photo, or for scenes that don't need a specific locked person in them.
 

@@ -65,6 +65,8 @@ Follow `references/davinci-resolve.md`. Set the project's resolution/frame rate 
 
 **Verify the actual timeline, don't just trust that the API calls succeeded.** Use `timeline_frame.capture` to look at real frames at a few points across the edit — confirm the right character/content is actually there, confirm the aspect ratio looks right in context, confirm there's no silent gap. A file-overwrite-in-place gotcha in `references/davinci-resolve.md` caused a fully "correct" set of files to render as corrupted inside Resolve in the session this skill was built from — it looked fine from the API's perspective and was wrong on screen.
 
+If the deliverable needs burned-in captions or a repeating title/end-card format, this pipeline's `ffmpeg` typically can't do that cleanly (no `drawtext`/`libass`) and hand-placing text per shot in Resolve is slower and less consistent than it should be for something that's really a template — generate those elements with Remotion instead (`references/remotion.md`), driven straight from the same `shotlist.json` manifest, then bring the rendered overlay/title clips into the Resolve assembly like any other asset.
+
 ### 8. Final pass
 
 Before calling it done: play through (or frame-sample across) the whole timeline, confirm every shot has the audio it's supposed to, confirm no shot reverted to a stale/wrong character, confirm aspect ratio is consistent start to finish. Update the manifest to reflect final status. If this is a project meant to be revisited, leave a short handoff note (what's locked/approved, what's still rough) — don't make the next session re-derive what you already know.
@@ -84,5 +86,6 @@ If the same specific failure happens 3+ times in a row (e.g. a character's age k
 - `references/lipsync.md` — real lipsync paths and the audio-stream verification step
 - `references/audio-music.md` — background music/SFX generation
 - `references/davinci-resolve.md` — MCP setup, assembly workflow, concrete gotchas hit in production
+- `references/remotion.md` — burned-in captions, title/end cards, and overlays driven straight from the shot-list manifest
 - `references/self-check.md` — the automated QA checks run between every phase
 - `references/shotlist-format.md` — the manifest schema that drives the whole pipeline
