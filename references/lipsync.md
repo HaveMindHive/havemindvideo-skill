@@ -35,21 +35,38 @@ Gotchas that cost real time/credits if missed:
 - Generation can take several minutes during busy periods — that's normal, not a failure; check History to see it land rather than assuming it's stuck.
 - Two-person shots (wide two-shots, over-the-shoulder) don't fit the single-Avatar Lip Sync flow — it's built for one speaking face at a time. For a two-shot, generate a "together" reference image and feed it to the generic video generator instead, or use solo lip-synced inserts cut together with a silent establishing two-shot.
 
-## Path 2: Replicate lipsync bridge (for Replicate-only pipelines)
+## Path 2: Replicate, staying in one ecosystem
 
-If your constraints keep you in Replicate for video (silent clip already generated) plus a separate audio file (from the ElevenLabs API, Google TTS, or local TTS), merge them with a dedicated lipsync model:
+If your constraints keep you in Replicate for video, there are two shapes of model here — a one-call avatar model (recommended default) and a two-call bridge for when you already have a silent clip from elsewhere.
+
+### 2a. One-call avatar + lipsync (recommended default for Replicate-only pipelines)
+
+**`prunaai/p-video-avatar`** — takes a reference `image` plus **either** an uploaded `audio` file **or** a `voice_script` (text) + `voice` selection, and generates the synced talking video directly, in one call. This is the Replicate equivalent of ElevenLabs' Avatar workflow (Path 1) — it does identity + voice + lipsync together instead of requiring a separate silent-video generation step first. Confirmed live and working (verified against our own locked character portrait, 2026-10-09).
+
+```python
+import replicate
+
+with open("character_portrait.png", "rb") as img, open("line.mp3", "rb") as audio:
+    output = replicate.run("prunaai/p-video-avatar", input={
+        "image": img,
+        "audio": audio,          # use your own pre-generated voice line (e.g. from ElevenLabs)...
+        "resolution": "1080p",   # "720p" or "1080p" — no explicit aspect_ratio field, infers from the image like kling
+    })
+```
+
+Omit `audio` and set `voice_script` + `voice` instead to use its own built-in TTS — the `voice` enum (`"Zephyr (Female)"`, `"Puck (Male)"`, `"Kore (Female)"`, etc.) is literally Google's Gemini TTS voice set, so this model doubles as a Replicate-native bridge to the Google voice tier in `references/voices.md` without a separate Google API call. For a project that already generates lines through ElevenLabs for voice consistency across shots, pass the pre-generated `audio` file instead and ignore the built-in voice entirely. Health-check with `no_op: true` (still requires `image` and either `audio` or `voice_script` to pass schema validation, but skips the real inference) if you just want to confirm the endpoint/your inputs are valid before a real run.
+
+This being a single call doesn't exempt it from the verification step below — check for an embedded audio stream in the output the same as any other path.
+
+### 2b. Two-call bridge (silent video + separate audio merge)
+
+Use this when you already have a silent clip from somewhere else (e.g. a kling clip generated specifically for its camera motion/action, where re-doing the whole shot through an avatar model would lose that) and just need to add sync to it:
 
 - **`sync/lipsync-2-pro`** — inputs: `video` (uri), `audio` (uri, docs say `.wav` but other common formats generally work), `sync_mode` (default `"loop"` — handles a video/audio duration mismatch by looping the shorter of the two rather than failing), `temperature` (0-1, how expressive the lipsync can be), `active_speaker` (bool, auto-detects which face is actually speaking when multiple people are in frame — turn this on for any two-shot with one speaking character).
 - **`bytedance/latentsync`** — alternative, also solid quality.
 - **`kwaivgi/kling-avatar-v2`** — Kling's own avatar/lipsync model, same model family as Kling video generation if you want to stay in one vendor's ecosystem.
 
-All three exist and work as of 2026-10-09 — but **Replicate model IDs and versions drift over time** (confirmed: two unrelated video models on Replicate were found pointing at deleted/stale versions within the same month). Before trusting a model id in any doc including this one, check the live schema:
-
-## Path 3: self-hosted SadTalker
-
-A fourth option if neither ElevenLabs nor a Replicate lipsync model fits (cost control at scale, no third-party API dependency, or you already run your own GPU infra): **SadTalker**, self-hosted on your own GPU (Modal, RunPod, or local). Same underlying limitation as the hosted options — sync quality degrades past roughly a 30° turned face, so the front-facing framing advice below still applies regardless of which path you pick. Worth it mainly when generation volume is high enough that per-clip hosted-API cost matters more than setup effort; for occasional/low-volume work, Path 1 or 2 is less to maintain.
-
-**A real alternative when lipsync precision genuinely doesn't matter for a shot**: skip lipsync entirely and use plain image-to-video motion (a character gesturing, reacting, moving naturally with mouth closed or only vaguely moving) for stylized characters, non-dialogue atmosphere beats, or brief cameo lines where the audience's attention is on something else in frame. Don't reach for this as a cost-cutting shortcut on a shot that's actually supposed to read as the character speaking a specific line — that's the exact mistake this doc exists to prevent — but it's a legitimate choice for a shot that was never going to need tight sync in the first place.
+All exist and work as of 2026-10-09 — but **Replicate model IDs and versions drift over time** (confirmed: two unrelated video models on Replicate were found pointing at deleted/stale versions within the same month). Before trusting a model id in any doc including this one, check the live schema:
 
 ```python
 import replicate
@@ -75,6 +92,12 @@ open("synced_clip.mp4", "wb").write(r.content)
 
 Pass local files as **open file handles**, not base64-encoded data URIs — embedding a video and an audio file as base64 in one JSON payload can bloat the request past a client-side read timeout. File handles let the SDK upload them and substitute a URL, which is both more reliable and avoids the payload-size problem entirely.
 
+## Path 3: self-hosted SadTalker
+
+A fourth option if none of the above fit (cost control at scale, no third-party API dependency, or you already run your own GPU infra): **SadTalker**, self-hosted on your own GPU (Modal, RunPod, or local). Same underlying limitation as the hosted options — sync quality degrades past roughly a 30° turned face, so the front-facing framing advice below still applies regardless of which path you pick. Worth it mainly when generation volume is high enough that per-clip hosted-API cost matters more than setup effort; for occasional/low-volume work, Path 1 or 2 is less to maintain.
+
+**A real alternative when lipsync precision genuinely doesn't matter for a shot**: skip lipsync entirely and use plain image-to-video motion (a character gesturing, reacting, moving naturally with mouth closed or only vaguely moving) for stylized characters, non-dialogue atmosphere beats, or brief cameo lines where the audience's attention is on something else in frame. Don't reach for this as a cost-cutting shortcut on a shot that's actually supposed to read as the character speaking a specific line — that's the exact mistake this doc exists to prevent — but it's a legitimate choice for a shot that was never going to need tight sync in the first place.
+
 ### Critical: verify the merge actually worked
 
 **A lipsync job can return a file URL that looks successful but contains no audio.** Don't assume success just because you got a response — always check the output before trusting it:
@@ -96,9 +119,16 @@ Does this shot have spoken dialogue that the audience needs to read as sync'd?
 ├── No / doesn't matter for this shot → any video model, no lipsync needed (motion-only is fine)
 └── Yes → Can the project use ElevenLabs beyond plain TTS?
           ├── Yes → Avatar + Lip Sync workspace (Path 1)
-          └── No, Replicate-only constraint, or audio already generated elsewhere
-                 ├── Occasional/low volume → Replicate lipsync bridge (Path 2) —
-                 │     verify embedded audio stream on every output before trusting it
+          └── No, Replicate-only constraint
+                 ├── Starting fresh, no silent video generated yet
+                 │     → prunaai/p-video-avatar, one call (Path 2a)
+                 ├── Already have a silent clip (generated for specific motion/camera work)
+                 │     → lipsync bridge onto it (Path 2b)
                  └── High volume, cost/infra control matters → self-hosted
-                       SadTalker (Path 3), same verification discipline applies
+                       SadTalker (Path 3)
+Every path: verify embedded audio stream on the output before trusting it.
 ```
+
+## Other avatar services (not evaluated in depth)
+
+**HeyGen** is another paid avatar/lipsync service (similar category to ElevenLabs' Avatar workflow) with several community Claude Code skill wrappers available. Not tested against this pipeline — worth knowing it exists as an alternative if ElevenLabs/Replicate don't fit a project's constraints, but no specific guidance here beyond that.

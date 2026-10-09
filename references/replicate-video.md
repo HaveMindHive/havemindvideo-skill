@@ -88,3 +88,7 @@ ffprobe -v error -select_streams v:0 -show_entries stream=width,height,duration 
 ```
 
 Check the resolution/aspect ratio matches what you expected (especially after a text-to-video call where `aspect_ratio` had to be set manually) and the duration is sane.
+
+## Alternative provider (not evaluated in depth)
+
+**Google's Veo** (video) and **Nano Banana** (image) are reachable via an MCP server (`molkex/mcp-flow-google`) running on your own Google account, as an alternative to Replicate's hosted models. Not tested against this pipeline's specific needs (character identity locking, start/end keyframes) — worth investigating if Replicate access/cost is a constraint, but no specific guidance here beyond that it exists.
