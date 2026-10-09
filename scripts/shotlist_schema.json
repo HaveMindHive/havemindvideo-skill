@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "HAVEMINDVIDEO shot list / manifest",
+  "type": "object",
+  "required": ["project", "aspect_ratio", "fps", "characters", "shots"],
+  "properties": {
+    "project": { "type": "string" },
+    "aspect_ratio": { "type": "string", "examples": ["9:16", "16:9", "1:1"] },
+    "fps": { "type": "integer" },
+    "characters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["description", "status"],
+        "properties": {
+          "description": { "type": "string" },
+          "reference_image": { "type": ["string", "null"] },
+          "status": { "enum": ["pending", "generated", "approved", "rejected"] }
+        }
+      }
+    },
+    "shots": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "characters", "action", "duration_s"],
+        "properties": {
+          "id": { "type": "string" },
+          "characters": { "type": "array", "items": { "type": "string" } },
+          "dialogue": { "type": ["string", "null"] },
+          "action": { "type": "string" },
+          "duration_s": { "type": "number" },
+          "reference_image": { "type": ["string", "null"] },
+          "reference_status": {
+            "enum": ["pending", "generated", "approved", "rejected"]
+          },
+          "video_file": { "type": ["string", "null"] },
+          "video_status": {
+            "enum": ["pending", "generated", "qa_passed", "qa_failed"]
+          },
+          "audio_file": { "type": ["string", "null"] },
+          "lipsync_file": { "type": ["string", "null"] },
+          "lipsync_status": {
+            "enum": ["n/a", "pending", "merged", "verified", "failed"]
+          },
+          "timeline_status": {
+            "enum": ["pending", "placed", "verified"]
+          }
+        }
+      }
+    }
+  }
+}
