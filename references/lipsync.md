@@ -116,6 +116,10 @@ Confirmed in production: `sync/lipsync-2-pro` on a two-person shot, with `active
 - **Keep two-shots for establishing shots and physical action** (a hand-off, a reaction). Putting dialogue on a two-shot is risky; only do it if you can isolate the speaker (for example by running lipsync on a crop containing only that face and compositing it back), and check the result.
 - Cut between the single-face dialogue shots and the silent two-shot like a normal editor would.
 
+### Very short audio fails
+
+`prunaai/p-video-avatar` rejected a 0.64 s line with a server error (HTTP 500). Pad very short lines with a little silence before and after (about 0.3 s lead, 0.9 s tail, ending near 1.8 s total) and re-run.
+
 ### Avatar clips are longer than the audio
 
 `prunaai/p-video-avatar` returns a clip a little longer than the audio you give it (about 0.3 to 0.9 s of trailing silence, and the video length is rounded up to whole seconds). The audio inside is byte-identical to your file (verified by cross-correlation), so nothing about the voice changes. Trim the tail in the edit (source end frame = audio length plus a few frames) rather than leaving dead air.
