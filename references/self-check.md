@@ -62,3 +62,10 @@ Cheap to do (ffmpeg + PIL), and it catches the problems before they are placed o
 
 ## Spend discipline
 Generate in small batches, look at the result, then scale. Do not launch a full-script batch before one pilot shot of each *type* (solo dialogue, two-shot, prop action) has passed review.
+
+## Render QA checklist
+1. Duration matches the EDL total (frames / fps).
+2. `blackdetect` shows only the intended fades and dips.
+3. `volumedetect` per section: dialogue about -18 to -20 dB mean, music under speech well below it.
+4. A frame sheet across any section that was edited late, to confirm the right picture holds long enough to read (screens and inserts should stay up long enough for a viewer to read them).
+5. Check every clip's frame rate before it goes on the timeline.

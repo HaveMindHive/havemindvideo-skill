@@ -255,3 +255,13 @@ Everything above covers what a simple ad or short-form assembly actually needs: 
 **Keep the media pool clean.** Make a `Previous Versions` bin and move superseded takes and old timelines into it as you go (`media_pool.move_clips` with `clip_ids` and `target_path`, which also moves timelines). Keep only the current take of each shot in the working bin so an old clip is never mixed into the edit. The last take is usually the one used, but treat that as a rule of thumb. Do not rename files on disk after import (it breaks the media pool links); follow the naming protocol when the file is created.
 
 **Sequence for a final pass:** lock picture and dialogue, compute the EDL (clip, track, record frame, trims) in a script and keep it as JSON, build the timeline from it, add fades, build the sound bed from the same EDL, place it, render, then QA the render itself (duration, per-section loudness, `blackdetect` for unintended black frames, a frame sheet across the whole length).
+
+## Frame rate, black gaps, and late timing tweaks (from the script v4 rebuild)
+
+**Conform every clip to the timeline frame rate before import.** `kwaivgi/kling-avatar-v2` outputs 30 fps. Resolve counts a clip's source frames at the clip's own rate, so a 30 fps clip placed with 24 fps frame counts ends early and leaves black gaps at the tail of every such shot. Run `ffprobe -show_entries stream=r_frame_rate` on every new clip, convert odd ones with `ffmpeg -vf fps=24`, then import the converted file and compute frame counts from it.
+
+**Always run `blackdetect` on the render** (`ffmpeg -i out.mp4 -vf blackdetect=d=0.05:pix_th=0.05 -an -f null -`). The only black you should see is the deliberate fades and dips. Anything else is a gap.
+
+**Trim by deleting and re-appending.** There is no trim call on a placed item. To shorten a shot, delete the item (`timeline.delete_clips`), then `media_pool.append_to_timeline` the same pool clip with a smaller `end_frame` at the same `record_frame`. To give a neighbor the freed time, replace it too (a held end frame can be made with `ffmpeg -vf tpad=stop_mode=clone:stop_duration=N`). If the two changes cancel out, every later marker and the sound bed stay aligned, so nothing else needs rebuilding. Re-apply fades on the replacement, and note that `timeline_item.set_fades` takes `{"timeline_item_id": ..., "options": {"FadeIn": n, "FadeOut": n}}`.
+
+**Imports can land in an unexpected bin.** Check where `import_media` put the file and `move_clips` it into the right bin. The MCP also archives a copy of the timeline (`_archived_vNN`) on destructive edits, so sweep those into the Previous Versions bin.
