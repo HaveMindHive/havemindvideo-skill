@@ -79,3 +79,19 @@ Practical response, in order:
 1. **Reroll the seed and regenerate** — if the model/technique is otherwise working, a different seed often avoids the artifact without changing anything else about the generation.
 2. **If a specific model/technique shows the defect repeatedly** (not just once), switch models rather than keep rerolling — e.g. `bytedance/flux-pulid` tested clean (0/2) on the same reference image and prompt that produced a watermark 2/2 on `consistent-character`. Some models are simply cleaner on this axis than others; find out which before committing to one for a whole project.
 3. **Always visually inspect before using an image as a seed for anything downstream** (a video generation, a lipsync pass) — a watermarked reference image propagates into every clip generated from it, turning one bad still into a whole shot's worth of wasted video generation. This is the same "look at the actual output, not just that the call succeeded" discipline as `references/self-check.md` — apply it here specifically, since this defect is easy to miss at a glance if the watermark is small or low-contrast against the background.
+
+## One reference per frame, and keep the SET consistent too
+
+Learned the hard way on a 16-shot ad: a locked character portrait is an identity anchor, not a shot reference. Every distinct frame needs its own reference image that describes **both the scene and the framing**:
+
+- Different framing (close-up vs medium vs two-shot vs over-the-shoulder) = new reference.
+- Different state (eyes closed vs open, holding a prop vs not, mid-gesture) = new reference. Do not ask the video model to invent a big state change from a neutral portrait.
+- Generate each frame reference with `google/nano-banana`, passing the locked portrait(s) as `image_input`, and **also pass a scene reference image** (an earlier approved frame of the same room) as an extra input with a line like "same table with the plum velvet cloth, same tapestry wall as the second reference image". Without a scene reference the model quietly changes the tablecloth, wall, and furniture from shot to shot (we got four different tables across one scene), which reads as continuity errors.
+- Review reference candidates side by side and zoom on hands before approving. Generate 2 to 3 candidates per frame, pick one, and reject any with letterbox bars, a different background, or extra/fused fingers.
+- Expect a repeating background problem: if candidate backgrounds drift (bookshelves and globes appearing), pick the candidate that matches the established set rather than the prettiest.
+
+### Props and actions: use a start frame AND an end frame
+For an action where an object appears or changes hands (a phone slid up from under a table, a hand-off), make two reference frames (before and after) and pass both to kling as `start_image` and `end_image`. A single start frame let the model morph another object into the prop (a crystal ball turned into the phone). In the prompt, say what must NOT change ("the glass crystal ball stays completely unchanged, never transforming") and describe prop orientation explicitly ("back of the phone toward the camera, screen toward her"); a phone held with its screen toward the camera reads as backwards.
+
+### Check the contact sheet, not the first frame
+Build a contact sheet (about 4 frames per clip across its length, one row per clip) and look at it before trusting any clip. Identity drift, morphing props, and ghosting hands show up mid-clip, not in frame 1. See `references/self-check.md`.

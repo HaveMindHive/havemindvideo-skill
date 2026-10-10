@@ -92,3 +92,11 @@ Check the resolution/aspect ratio matches what you expected (especially after a 
 ## Alternative provider (not evaluated in depth)
 
 **Google's Veo** (video) and **Nano Banana** (image) are reachable via an MCP server (`molkex/mcp-flow-google`) running on your own Google account, as an alternative to Replicate's hosted models. Not tested against this pipeline's specific needs (character identity locking, start/end keyframes) — worth investigating if Replicate access/cost is a constraint, but no specific guidance here beyond that it exists.
+
+## Notes from a 16-shot production
+
+- Kling returns a few pixels off the requested size when it infers from the start image (for example 1088x1904 for a 9:16 input); Resolve scales it, so do not treat that as an error.
+- Kling image-to-video clips are fixed-length (5 or 10 s). Trim in the edit.
+- For anything where an object appears or moves between hands, use a start AND end image (see `character-consistency.md`) and put "must not change" statements for nearby objects in the prompt.
+- A single static two-shot reference makes the characters over-animate (a character meant to sit sheepish and still grinned and gestured). State each character's intended stillness or emotion explicitly in the prompt.
+- Text-only B-roll with no people (crystal ball, candles, doorway) works well in text-to-video; set `aspect_ratio` explicitly since no start image sets it.

@@ -62,7 +62,7 @@ This being a single call doesn't exempt it from the verification step below — 
 
 Use this when you already have a silent clip from somewhere else (e.g. a kling clip generated specifically for its camera motion/action, where re-doing the whole shot through an avatar model would lose that) and just need to add sync to it:
 
-- **`sync/lipsync-2-pro`** — inputs: `video` (uri), `audio` (uri, docs say `.wav` but other common formats generally work), `sync_mode` (default `"loop"` — handles a video/audio duration mismatch by looping the shorter of the two rather than failing), `temperature` (0-1, how expressive the lipsync can be), `active_speaker` (bool, auto-detects which face is actually speaking when multiple people are in frame — turn this on for any two-shot with one speaking character).
+- **`sync/lipsync-2-pro`**, inputs: `video` (uri), `audio` (uri, docs say `.wav` but other common formats generally work), `sync_mode` (default `"loop"`, handles a video/audio duration mismatch by looping the shorter of the two rather than failing), `temperature` (0-1, how expressive the lipsync can be), `active_speaker` (bool, intended to pick which face is speaking when several people are in frame). **Do not rely on it.** Tested on a two-shot with a silent second character: it animated the wrong person (the character who was NOT supposed to speak). See "Two-face shots" below.
 - **`bytedance/latentsync`** — alternative, also solid quality.
 - **`kwaivgi/kling-avatar-v2`** — Kling's own avatar/lipsync model, same model family as Kling video generation if you want to stay in one vendor's ecosystem.
 
@@ -107,6 +107,20 @@ ffprobe -v error -show_streams -select_streams a synced_clip.mp4
 ```
 
 If that prints nothing, the merge silently failed (or produced a video-only file) and you have a silent clip, not a lip-synced one. Check this for every merged clip before it goes into the edit — a background batch job that "completes" is not the same as a batch job that *worked*.
+
+### Two-face shots: keep dialogue single-face
+
+Confirmed in production: `sync/lipsync-2-pro` on a two-person shot, with `active_speaker: true`, moved the mouth of the wrong character. The model only sees a silent video plus an audio file, so it has nothing reliable to decide which of two faces owns the line. Rules that avoid the whole problem:
+
+- **Every line of dialogue gets a single-face shot** (a close-up or medium of the speaker, or an over-the-shoulder with only the speaker's face in frame). Generate it one call with `prunaai/p-video-avatar` from a reference image of just that character in that frame.
+- **Two-shots are silent.** Use them for establishing shots and for physical action (a hand-off, a reaction). Never put dialogue on one.
+- Cut between the single-face dialogue shots and the silent two-shot like a normal editor would.
+
+### Avatar clips are longer than the audio
+
+`prunaai/p-video-avatar` returns a clip a little longer than the audio you give it (about 0.3 to 0.9 s of trailing silence, and the video length is rounded up to whole seconds). The audio inside is byte-identical to your file (verified by cross-correlation), so nothing about the voice changes. Trim the tail in the edit (source end frame = audio length plus a few frames) rather than leaving dead air.
+
+`video_prompt` on that model steers expression and action (for example "eyes closed, nodding slowly", "grins, not looking up"). Use it, and keep it consistent with the reference image. A reference image that already shows the right expression and framing matters more than the prompt.
 
 ### Known limitation
 

@@ -47,3 +47,18 @@ ffprobe -v error -show_streams -select_streams a merged.mp4
 ## When to stop and change approach instead of retrying
 
 If the same specific failure recurs 3+ times with only prompt wording changed between attempts (a character's age keeps drifting, a wardrobe keeps bleeding between two characters, a merge keeps failing the same way), that's a signal the *technique* is wrong, not that the next wording tweak will fix it. Switch tools (identity-lock model instead of text re-prompting, a different lipsync model, a dedicated per-shot reference instead of a reused one) rather than spending a fourth, fifth, sixth attempt on the same approach. If unattended and genuinely stuck after a technique change, stop and flag it rather than continuing to spend API budget hoping for a different result from the same method.
+
+## Contact-sheet QA (do this for every generated clip)
+
+Frame 1 hides most failures. For each clip, grab four frames across its length (8%, 40%, 70%, 95%), put them in a row, and stack the clips you are reviewing into one image. Then look for:
+
+- identity drift (hair color/brightness, age, face shape changing mid-clip),
+- prop morphing (an object turning into another object), props held backwards,
+- hands: extra, fused or ghosted fingers, especially during hand-offs,
+- set changes (tablecloth, wall, furniture) versus the established scene,
+- on dialogue shots, that the right person is the one speaking.
+
+Cheap to do (ffmpeg + PIL), and it catches the problems before they are placed on a timeline.
+
+## Spend discipline
+Generate in small batches, look at the result, then scale. Do not launch a full-script batch before one pilot shot of each *type* (solo dialogue, two-shot, prop action) has passed review.

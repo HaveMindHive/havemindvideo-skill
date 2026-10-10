@@ -9,6 +9,14 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
 
 **The one rule that matters most: never reuse a generic reference image across unrelated shots, and never trust a generation without checking it before building on it.** Everything else below exists to enforce that rule automatically instead of relying on remembering it.
 
+## Hard-won rules (added after a 16-shot production)
+
+1. **One reference image per frame**, describing the scene and the framing, plus a scene reference so the set stays consistent. See `references/character-consistency.md`.
+2. **Confirm voices with the user** before generating a whole script; build an audition page. Never take a handoff note's word for which voice was chosen. See `references/voices.md`.
+3. **Dialogue shots are single-face.** Lipsync on a two-person frame can animate the wrong person; `active_speaker` does not reliably fix it. Two-shots stay silent. See `references/lipsync.md`.
+4. **Review contact sheets, not first frames**, and pilot one shot of each type before batching the rest. See `references/self-check.md`.
+5. **Update the manifest and these docs as you learn things.** A skill that still describes a failed approach as working is worse than none.
+
 ## Before you start
 
 1. Confirm what's available: `REPLICATE_API_TOKEN`, and at least one voice option (`ELEVENLABS_API_KEY`, Google TTS credentials, or the local fallback in `references/voices.md` — local works with zero API keys, good for a first dry run).
@@ -47,7 +55,7 @@ After each generation, run the automated checks in `references/self-check.md` (`
 
 ### 5. Generate voice
 
-Pick a tier from `references/voices.md` (ElevenLabs API, Google, or local Chatterbox/Bark) per the project's budget/quality needs. Generate every dialogue line now, named consistently with the shot list (e.g. `shot04_elena.mp3`) so phase 6 can find them without guessing.
+Pick a tier from `references/voices.md` (ElevenLabs API, Google, or local/Replicate Chatterbox) per the project's budget/quality needs, and **have the user audition and approve the voices before generating the full script**. Generate every dialogue line now, named consistently with the shot list (e.g. `shot04_elena.mp3`) so phase 6 can find them without guessing.
 
 ### 6. Real lipsync — not a text-prompt placeholder
 

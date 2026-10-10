@@ -106,3 +106,17 @@ Both run through the same local script/environment — swap `--engine chatterbox
 | Final, polished voice; existing ElevenLabs voice library; budget for API calls | **ElevenLabs** |
 | No ElevenLabs access, need a paid fallback | **Google Cloud TTS / Gemini TTS** (verify API shape first — see above) |
 | No API keys at all, drafting/scratch takes, need voice cloning from your own sample, zero cost | **Chatterbox / Bark (local)** |
+
+## Choosing voices: confirm with the user, never infer
+
+- **Never take a handoff note's word for which voice was chosen.** A project drifted onto a wrong voice because an old note named it; the user heard a heavy accent they had explicitly not chosen. Before generating a full script, build an audition page (one `<audio>` per candidate, same two real lines for every voice) and let the user pick.
+- **Read the voice's labels before using it.** An ElevenLabs voice can carry a `language`/`accent` label that is not English (a voice with a German language tag produced a strong foreign accent on English lines). Check `labels` and the voice's description via `GET /v1/voices/{id}`.
+- **One model and one settings policy for every line of a character.** Mixing models, bracketed emotion tags, and different stability values across lines is what makes a character's voice sound inconsistent from shot to shot. Use the voice's own stored settings for ordinary lines.
+- **Breathy/sensual misreads.** Ellipses and bracketed tags like `[eyes closed, hesitant]` can make a voice sigh or sound sensual on short agreement lines ("yes... yes..."). If the script says "clear spoken words only", write plain punctuation, no ellipses, no emotion tags, and say so in your brief.
+- **Compose pauses outside the TTS.** Generate each sentence separately and join them with `ffmpeg` silence of an exact length; that is more predictable than break tags, which not every model honors.
+
+### Credit exhaustion looks like an auth error
+ElevenLabs returns **HTTP 401 `quota_exceeded`** (not 402/429) when the key has no credits left, and the message says "You have 0 credits remaining". A big audition batch with a retry loop on 429s can use up the credits and then every call fails. Budget auditions (a handful of voices, two lines each), do not retry on 401, and check the message body. Some newer models round tiny requests to zero credits, so a 4-character test can succeed while a real sentence fails; do not read that as "this model has its own credits". A per-key credit limit set in the dashboard can also cause this while the account itself still has credits.
+
+### No-ElevenLabs path on Replicate
+If ElevenLabs is unavailable, voices can be produced on Replicate: `resemble-ai/chatterbox` clones a voice from a short reference WAV (`audio_prompt`, must be WAV, convert with ffmpeg) and takes `exaggeration`, `cfg_weight`, `temperature`, `seed`; `prunaai/p-video-avatar` has built-in voices via `voice_script` + `voice` + `voice_prompt`. Whichever you pick, use the same reference and settings for every line of a character, and let the user listen before you build clips on top of it.

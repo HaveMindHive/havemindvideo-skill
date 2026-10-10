@@ -129,7 +129,7 @@ media_pool(action="append_to_timeline", params={"clip_infos": [
 ]})
 ```
 
-`start_frame`/`end_frame` here are **source** frames (positions within that clip's own media), while `record_frame` is a **timeline** frame. When Resolve answers append with `None`/`False`/an empty list, that's a real failure (`APPEND_TO_TIMELINE_FAILED`), not success with zero items — check `error.retryable`; it's only true when a readback confirms nothing actually landed, otherwise inspect the timeline before retrying or you risk double-appending.
+`start_frame`/`end_frame` here are **source** frames (positions within that clip's own media), while `record_frame` is a timeline frame **relative to the timeline start** (frame 0 = the first frame, even when the timeline starts at 01:00:00:00). This is true for BOTH `create_timeline_from_clips` and `append_to_timeline` with `clip_infos`. Passing absolute frames (86400 + n) pushes the item roughly 86400 frames past the end and the readback shows a huge timeline-duration drift: if you see that warning, delete the items and re-place them with relative frames. When Resolve answers append with `None`/`False`/an empty list, that's a real failure (`APPEND_TO_TIMELINE_FAILED`), not success with zero items, check `error.retryable`; it's only true when a readback confirms nothing actually landed, otherwise inspect the timeline before retrying or you risk double-appending.
 
 ### Verify what's actually on the timeline — the right tool, not the tempting one
 
@@ -187,6 +187,12 @@ render(action="prepare_delivery_job", params={"target": "tiktok", "target_dir": 
 Named targets like `tiktok`, `youtube`, or `h264_1080p_web` resolve to both the correct Resolve render settings and a QC spec for the output — and fail with the actual available list if your install/license can't deliver that target, rather than silently rendering something else. If your server version doesn't have this, fall back to the manual `render.add_job` flow above with settings matching your platform's spec by hand.
 
 ## Gotchas
+
+**A new timeline has one video track.** Asking for `track_index: 2` on a timeline that has only V1 silently places nothing. Call `timeline(action="add_track", params={"track_type": "video"})` first, then append the overlay/cutaway clips to track 2. Pass `"media_type": 1` on cutaways so they do not drag a duplicate audio item along.
+
+**`snapshot` gap detector reports 1-frame gaps between every clip.** The item `end` it returns is the last frame (inclusive), the detector treats it as exclusive, so back-to-back clips look like they have a 1-frame gap. If the next item starts at `end + 1` the cut is clean. Verify with one `timeline_frame.capture` on each side of a boundary if in doubt.
+
+**`timeline_frame.capture` has side effects.** It renders a frame by changing the project's render format/codec to JPEG and moving the playhead, and it may not restore them. After a round of captures, reset the playhead (`timeline_markers.set_current_timecode`) and re-set the render format before queuing a real render, or the deliverable renders in the wrong codec.
 
 **Headless and "wedged" state.** `resolve_control(action="runtime_mode")` returns `{running, headless, instances, database_attached, guidance}`. **`database_attached: false` means the instance is wedged** — it answers version/page/product queries normally (so an ordinary liveness check looks fine), but `CreateProject`/`LoadProject` return `False` forever and some calls never return at all. It does not recover on its own; quit and relaunch Resolve, don't retry. Separately: **never call `SaveProject()` without first checking the project isn't the default, never-saved `"Untitled Project"`** — on a headless instance this specific case blocks forever (Resolve wants to raise a Save-As dialog that can never be answered). Check the project name first; if it's still `"Untitled Project"`, there's nothing to save yet.
 
