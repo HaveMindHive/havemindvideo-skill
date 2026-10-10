@@ -150,3 +150,9 @@ Every path: verify embedded audio stream on the output before trusting it.
 ## Other avatar services (not evaluated in depth)
 
 **HeyGen** is another paid avatar/lipsync service (similar category to ElevenLabs' Avatar workflow) with several community Claude Code skill wrappers available. Not tested against this pipeline — worth knowing it exists as an alternative if ElevenLabs/Replicate don't fit a project's constraints, but no specific guidance here beyond that.
+
+### Lipsync on a closed-mouth, closed-eyes silent clip does almost nothing
+`sync/lipsync-2-pro` run on a silent clip of a character with eyes closed and lips relaxed produced almost no visible mouth movement, even at `temperature` 1.0 (checked by cropping the mouth across frames; the output looked identical to the input). The avatar model animates speech properly but tends to open closed eyes once the character speaks energetically, and prompts or negative prompts ("eyes stay closed") did not hold. If a shot needs speech with eyes closed, generate several seeded takes (`seed` input) and pick the one where the eyes stay closed longest (measure the eye region against the first frame; known-closed clips scored about 25 to 28 and open-eyed clips about 46 on a 0 to 255 scale), or change the shot.
+
+### Never mention an absent person in a video prompt
+A prompt like "she stares at the person opposite her" made the video model invent a new person (a man in a green sweater) and walk him into the frame, even though the reference showed only one woman. Say that she is the only person in frame and looks at an off-screen spot, and add "another person, arm entering frame" to the negative prompt.
