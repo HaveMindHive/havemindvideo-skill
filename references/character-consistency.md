@@ -95,3 +95,9 @@ For an action where an object appears or changes hands (a phone slid up from und
 
 ### Check the contact sheet, not the first frame
 Build a contact sheet (about 4 frames per clip across its length, one row per clip) and look at it before trusting any clip. Identity drift, morphing props, and ghosting hands show up mid-clip, not in frame 1. See `references/self-check.md`.
+
+## Continuity checklist (from a finished 16-shot ad)
+Two details drifted in a production that was otherwise accepted: the characters ended up at separate tables across shots even though the wide shot showed one table, and a character's painted nails disappeared in some shots. Prevent both up front:
+- **One shared scene reference.** Lock a single image of the set (table, cloth, props, lighting, background) and pass it as a reference into every shot, not only the wide.
+- **Put hands, nails, jewelry, and wardrobe into each character lock**, and include them in the per-shot reference prompt.
+- **Check continuity on contact sheets shot to shot** before batching the rest: table and props, hands and nails, phone or prop position, lighting. Fix at the reference stage; it is far cheaper than regenerating clips.

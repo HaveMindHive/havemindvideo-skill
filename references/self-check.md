@@ -69,3 +69,4 @@ Generate in small batches, look at the result, then scale. Do not launch a full-
 3. `volumedetect` per section: dialogue about -18 to -20 dB mean, music under speech well below it.
 4. A frame sheet across any section that was edited late, to confirm the right picture holds long enough to read (screens and inserts should stay up long enough for a viewer to read them).
 5. Check every clip's frame rate before it goes on the timeline.
+6. Continuity pass across the whole cut: same table and set in every shot, hands and nails consistent, wardrobe and props unchanged.
