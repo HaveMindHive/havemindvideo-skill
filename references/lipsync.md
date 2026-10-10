@@ -113,7 +113,7 @@ If that prints nothing, the merge silently failed (or produced a video-only file
 Confirmed in production: `sync/lipsync-2-pro` on a two-person shot, with `active_speaker: true`, moved the mouth of the wrong character. The model only sees a silent video plus an audio file, so it has nothing reliable to decide which of two faces owns the line. Rules that avoid the whole problem:
 
 - **Every line of dialogue gets a single-face shot** (a close-up or medium of the speaker, or an over-the-shoulder with only the speaker's face in frame). Generate it one call with `prunaai/p-video-avatar` from a reference image of just that character in that frame.
-- **Two-shots are silent.** Use them for establishing shots and for physical action (a hand-off, a reaction). Never put dialogue on one.
+- **Keep two-shots for establishing shots and physical action** (a hand-off, a reaction). Putting dialogue on a two-shot is risky; only do it if you can isolate the speaker (for example by running lipsync on a crop containing only that face and compositing it back), and check the result.
 - Cut between the single-face dialogue shots and the silent two-shot like a normal editor would.
 
 ### Avatar clips are longer than the audio
