@@ -97,6 +97,7 @@ If the same specific failure happens 3+ times in a row (e.g. a character's age k
 - `references/voices.md` — ElevenLabs / Google / local voice generation tiers
 - `references/lipsync.md` — real lipsync paths and the audio-stream verification step
 - `references/audio-music.md` — background music/SFX generation
+- `references/editing.md` - editing craft: pacing, cuts versus dissolves, continuity at cuts, dialogue audio, final-pass checklist
 - `references/davinci-resolve.md` — MCP setup, assembly workflow, concrete gotchas hit in production
 - `references/remotion.md` — burned-in captions, title/end cards, and overlays driven straight from the shot-list manifest
 - `references/self-check.md` — the automated QA checks run between every phase
