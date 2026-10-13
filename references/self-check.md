@@ -70,3 +70,10 @@ Generate in small batches, look at the result, then scale. Do not launch a full-
 4. A frame sheet across any section that was edited late, to confirm the right picture holds long enough to read (screens and inserts should stay up long enough for a viewer to read them).
 5. Check every clip's frame rate before it goes on the timeline.
 6. Continuity pass across the whole cut: same table and set in every shot, hands and nails consistent, wardrobe and props unchanged.
+
+
+## Audio QA pitfalls (10-12-2026)
+
+- Whisper `small` invents repeated lines at the end of a file and over music (it "heard" an earlier line again after the voice-over). Do not report an artifact from it. Re-run `medium` on a short isolated segment, once per channel (`pan=mono|c0=c0`, then `c1`).
+- A user may hear something the transcript does not show (a Fairlight bus feeding the master, a bad render). If a stem reconstruction (bed + voice-over aligned, best-fit gain, subtract from the render) shows nothing extra, say so plainly, list what was checked, and point at the Fairlight bus routing instead of guessing.
+- Loudness per second (`ebur128`) and a `showspectrumpic` image of the last 15 seconds are quick sanity views.

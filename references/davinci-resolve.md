@@ -265,3 +265,22 @@ Everything above covers what a simple ad or short-form assembly actually needs: 
 **Trim by deleting and re-appending.** There is no trim call on a placed item. To shorten a shot, delete the item (`timeline.delete_clips`), then `media_pool.append_to_timeline` the same pool clip with a smaller `end_frame` at the same `record_frame`. To give a neighbor the freed time, replace it too (a held end frame can be made with `ffmpeg -vf tpad=stop_mode=clone:stop_duration=N`). If the two changes cancel out, every later marker and the sound bed stay aligned, so nothing else needs rebuilding. Re-apply fades on the replacement, and note that `timeline_item.set_fades` takes `{"timeline_item_id": ..., "options": {"FadeIn": n, "FadeOut": n}}`.
 
 **Imports can land in an unexpected bin.** Check where `import_media` put the file and `move_clips` it into the right bin. The MCP also archives a copy of the timeline (`_archived_vNN`) on destructive edits, so sweep those into the Previous Versions bin.
+
+
+## Cut-pass workflow (learned finishing the dorm-room ad, 10-12-2026)
+
+**Drive the timeline from a layout script, not by hand.** Keep one small Python file with an ordered list of (clip key, frames shown, dissolve frames into next, has dialogue audio, source in-point). It computes record frames, which video track each clip goes on (alternate V1/V2 whenever a dissolve follows), the fades to set, and the music-duck map. A cut or an insert is then one edited line, and a new timeline is rebuilt from it. This replaces ripple math, which the API cannot do.
+
+**Rebuild into a new timeline per version** (`DORM ROOM FINAL - cut v7`, v8, ...) instead of editing in place. Old versions stay as fallbacks. Pool clutter builds up (archived copies are auto-created), so offer cleanup at the end.
+
+**Order of calls that works:** `create_timeline_from_clips` with the V1 items, `timeline.add_track` for video, `timeline.add_track` twice for audio, `append_to_timeline` with the V2 items (`media_type` 1), then one `append_to_timeline` for all audio (`media_type` 2): dialogue on A1, secondary voice on A2, music bed on A3. `media_type` 1 never creates audio tracks, so the audio tracks must be added first. `end_frame` is exclusive.
+
+**Dialogue audio length vs video length.** A clip that dissolves into the next one shows N extra tail frames of video, so its audio is shorter than its picture by N. Set audio `end_frame` to the base length (displayed minus N) so a voice never runs into the next scene.
+
+**Fades by index.** `timeline_item.set_fades` addresses an item by `track_type`, `track_index`, and 0-based `item_index` (order along the track). Compute the V2 index list from the layout, and set FadeIn on an incoming V2 clip or FadeOut on an outgoing V2 clip.
+
+**Levels are baked, not set.** Resolve ignores Volume writes and `normalize_audio_level` cannot be read back, so bake gain with ffmpeg before import. SetCDL also fails silently, so make graded copies with ffmpeg and `replace_clip` with a NEW filename (same path does not refresh).
+
+**One approved voice line onto an approved silent clip:** pad the line with leading silence so speech starts after the look-up beat (`anullsrc` + `concat` + `apad=whole_dur`), run `sync/lipsync-2-pro` with `sync_mode` cut_off and temperature 0.3 (it changes the mouth only and keeps the eyeline), then check the audio stream, crop the face to confirm the gaze, and transcribe.
+
+**Render check:** `render.verify_output` with `expected_frames`, `blackdetect`, `ebur128` loudness, and a Whisper pass on the final file (see `self-check.md`).

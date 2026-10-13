@@ -18,6 +18,9 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
 5. **Scope fixes to the scene that has the problem.** A note about one shot is not a verdict on the whole character, voice, or approach; keep what works, reuse approved assets, and redo only what changed.
 6. **Update the manifest and these docs as you learn things.** A skill that still describes a failed approach as working is worse than none.
 
+7. **Edit passes do only the precise thing asked.** When the user says "cut this clip", cut that clip and nothing else, then render. Audio levels and transitions are a separate pass the user will request. Never improvise extra fades, dissolves, trims, or mix changes inside a cut pass. Keep a plain layout script so a cut is a one-line change and a rebuild reproduces every other decision exactly. See `references/davinci-resolve.md` (Cut-pass workflow).
+8. **Verify audio with the right tools.** Whisper `small` hallucinates repeated lines over music and at file ends. Check the tail with `medium` on an isolated segment, per channel, and reconstruct the expected mix from the stems when a user reports an artifact. See `references/self-check.md`.
+
 ## Before you start
 
 1. Confirm what's available: `REPLICATE_API_TOKEN`, and at least one voice option (`ELEVENLABS_API_KEY`, Google TTS credentials, or the local fallback in `references/voices.md` — local works with zero API keys, good for a first dry run).
