@@ -123,3 +123,10 @@ If ElevenLabs is unavailable, voices can be produced on Replicate: `resemble-ai/
 
 ### Making a cloned voice livelier
 A cloned voice read flat (pitch variation about 2.7 semitones against about 4.9 for the original voice). Raising `exaggeration` to 0.7 to 0.9 with `cfg_weight` around 0.3, using an emotionally matching reference clip, and generating about six takes per line gave better takes. Choose among takes with a simple objective score (std-dev of voiced pitch in semitones plus loudness range in dB, limited to takes within about 0.8 to 1.3 times the median duration so slow or unstable takes are dropped), then still let the user listen. Cutting a repeated word in the script ("wait" twice in a row) also made delivery sound more natural.
+
+## Quota and fallback lessons (10-12-2026)
+
+- An ElevenLabs API key can report `quota_exceeded` with 0 credits while the web app (a different credit pool) still works. Do not keep retrying the API. Say so once, then generate in the web app (Text to Speech, the same voice, model, stability, and similarity), download the takes, and move them into the project with proper names. Close the browser tab afterwards.
+- Replicate's `elevenlabs/v3`, `flash-v2.5`, and `turbo-v2.5` take a preset `voice` name only. A custom or cloned voice (such as a project's locked character voice) is not available there, so they are not a substitute when a voice has been approved.
+- A cloned voice (Chatterbox) that gets the accent wrong is a rejection, not a tuning problem. Go back to the approved voice instead of re-rolling clones.
+- For a natural read, lower stability (about 0.25 to 0.5) and no emotion tags. The end-card voice-over should be one voice reading the card text exactly, loudness-matched to the other dialogue (`loudnorm` to about -16.5 LUFS, mono, 48 kHz) before import.

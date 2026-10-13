@@ -284,3 +284,5 @@ Everything above covers what a simple ad or short-form assembly actually needs: 
 **One approved voice line onto an approved silent clip:** pad the line with leading silence so speech starts after the look-up beat (`anullsrc` + `concat` + `apad=whole_dur`), run `sync/lipsync-2-pro` with `sync_mode` cut_off and temperature 0.3 (it changes the mouth only and keeps the eyeline), then check the audio stream, crop the face to confirm the gaze, and transcribe.
 
 **Render check:** `render.verify_output` with `expected_frames`, `blackdetect`, `ebur128` loudness, and a Whisper pass on the final file (see `self-check.md`).
+
+**Swapping one audio item in place:** import the new file, `timeline.delete_clips` the old audio item by its timeline item id, then `append_to_timeline` the new clip with the same `record_frame`, `track_index`, and `media_type` 2. Read the timeline back (`project_manager.snapshot`, audio) to confirm the position before rendering. Name each render with a new version (`..._v4.3_...`) so earlier versions stay as fallbacks.
