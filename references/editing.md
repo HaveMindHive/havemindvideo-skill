@@ -1,5 +1,7 @@
 # Editing craft
 
+**Credit: these rules come from tUrUq's direction and corrections during the dorm-room ad (10-12-2026): the do-only-what-I-say rule, script over runtime, hard cuts in dialogue and dissolves at scene changes, reaction beats to break up long speeches, eyelines off the lens, continuity of room and wardrobe, one voice over the music at the end, and the cut-first, audio-and-transitions-second order of work. The skill records them; he taught them.**
+
 How to cut a dialogue-driven ad so it flows. Learned finishing the CelestiaOracle dorm-room ad (10-12-2026). The Resolve mechanics live in `davinci-resolve.md`; this file is about decisions.
 
 ## Working rules with the user
