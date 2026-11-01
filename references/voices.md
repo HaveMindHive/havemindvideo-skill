@@ -130,3 +130,17 @@ A cloned voice read flat (pitch variation about 2.7 semitones against about 4.9 
 - Replicate's `elevenlabs/v3`, `flash-v2.5`, and `turbo-v2.5` take a preset `voice` name only. A custom or cloned voice (such as a project's locked character voice) is not available there, so they are not a substitute when a voice has been approved.
 - A cloned voice (Chatterbox) that gets the accent wrong is a rejection, not a tuning problem. Go back to the approved voice instead of re-rolling clones.
 - For a natural read, lower stability (about 0.25 to 0.5) and no emotion tags. The end-card voice-over should be one voice reading the card text exactly, loudness-matched to the other dialogue (`loudnorm` to about -16.5 LUFS, mono, 48 kHz) before import.
+
+## Replicate ElevenLabs preset voices, and the website paywall (10-21-2026)
+
+**`elevenlabs/v3`, `turbo-v2.5` and `flash-v2.5` on Replicate take a preset voice name only.** The enum at that time: Rachel, Drew, Clyde, Paul, Aria, Domi, Dave, Roger, Fin, Sarah, James, Jane, Juniper, Arabella, Hope, Bradford, Reginald, Gaming, Austin, Kuon, Blondie, Priyanka, Alexandra, Monika, Mark, Grimblewood. Re-read the live schema before trusting this list.
+
+- **Pin the version id** when you call (`replicate.run("elevenlabs/v3:<version id>", ...)`). Bare model names 404 on some models.
+- **`previous_text` and `next_text` are NOT supported on v3** (the call errors). Generate each line on its own.
+- `speed` (0.7 to 1.2) moved the pace only a little (about 2 percent at 1.1); do not rely on it to hit a length.
+- Same text gives different takes. If Whisper hears a different word ("coexisting" heard as "coexist in"), generate again; four takes was always enough. See `scripts/paper-cutout/gen_vo.py`.
+- Audition with the real hook and close lines, same two lines for every candidate, on a small HTML page of `<audio>` tags opened in the browser. You cannot hear audio; the user picks.
+
+**The ElevenLabs website can refuse every generation even when the balance looks fine.** In one session every "Generate speech" click (Eleven v4, Multilingual v2, a library voice, a voice the user had used before) opened "Upgrade to continue creating" (a $99/month Pro dialog) while the account menu showed 161,000 credits on the Creator plan. Do not subscribe on the user's behalf (that is a purchase), do not retry in a loop, close the dialog, say so once, and fall back to Replicate presets or ask the user to generate on the page. The per-generation character limit shown on the page (10,000 for v4, 5,000 for Multilingual v2) is not the credit balance.
+
+**Do not clone or imitate a named real person.** If the user asks for a voice "that sounds like" a specific real person, pick a stock voice with a similar register (age, accent, pace, tone) and say that is what you did.

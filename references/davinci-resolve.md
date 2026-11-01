@@ -286,3 +286,23 @@ Everything above covers what a simple ad or short-form assembly actually needs: 
 **Render check:** `render.verify_output` with `expected_frames`, `blackdetect`, `ebur128` loudness, and a Whisper pass on the final file (see `self-check.md`).
 
 **Swapping one audio item in place:** import the new file, `timeline.delete_clips` the old audio item by its timeline item id, then `append_to_timeline` the new clip with the same `record_frame`, `track_index`, and `media_type` 2. Read the timeline back (`project_manager.snapshot`, audio) to confirm the position before rendering. Name each render with a new version (`..._v4.3_...`) so earlier versions stay as fallbacks.
+
+## Lessons from a 17-shot narration short (10-21-2026)
+
+**A regenerated file at the SAME path renders stale audio.** After rewriting narration, the WAVs were regenerated under the same filenames and re-imported into new bins. Resolve showed the new durations in the media pool but the render still contained the OLD speech. The fix is the same as for video: write changed files under a NEW name (`shot06_voice_v2.wav`), import them, delete the old timeline items, append the new ones at the same record frames. Name files by content (frame count plus hash) from the start so this cannot happen, and transcribe the rendered file (`self-check.md`).
+
+**Batch appends are all-or-nothing, so a mistyped id fails cleanly.** A single wrong clip id (`media pool clip not found`) places nothing. Copy ids from the listing character by character; do not retype from memory. Better: do not copy ids by hand at all, fetch them programmatically.
+
+**Cheaper id lookup: `media_pool(action="probe_media_pool")`.** It returns every bin with each clip's `id`, `file_path` and `duration`. `project_settings.project_summary(include_clips=true)` returns the whole pool (about 10k tokens once the project has several versions); duplicates of the same filename in old and new bins make that list easy to misread. Match on `file_path`, not on `name`.
+
+**Replace items on a timeline:** `timeline(action="delete_clips", params={"clip_ids": [<timeline_item_id>, ...]})` takes timeline item ids (from the append result), then `media_pool.append_to_timeline` the replacement. It archives a copy of the timeline each time (`_archived_vNN`); sweep those into `Previous Versions`.
+
+**Fade survives deleting and re-adding other items.** Verify with `timeline_item.get_fades`; it did here.
+
+**Housekeeping per version:** move the previous version's four bins (Shot Clips, VO Audio, Overlays, Music and SFX) into `Master/Previous Versions` with one `move_folders` call, then create fresh bins with the same names and import only current files.
+
+**Render:** `render.prepare_delivery_job(target="tiktok", target_dir=..., custom_name=..., require_temp_target=false)`; `require_temp_target=false` is needed to write into a project folder. Give each render a new custom name. Then `render.verify_output(job_id, expected_frames)`, `ffprobe`, `blackdetect`, `ebur128`, and a Whisper transcript diff of the render. `timeline_frame.capture` leaves the render format on JPG, so always go through `prepare_delivery_job` again before a real render.
+
+**Track plan that worked** for dissolves plus wipes plus overlays: V1/V2 alternate only at dissolves, V3 transparent lettering overlay for the whole length (ProRes 4444), V4 wipe clips (ProRes 4444) centered on hard cuts, A1 narration, A2 baked music and effects bed. All placements use relative record frames from a script (`scripts/paper-cutout/layout.py` writes `edl.json`).
+
+**The user may move or rename render files** while you work. If a render "vanishes", check the Trash and ask before assuming it was lost; a re-render is cheap but make sure you know why.

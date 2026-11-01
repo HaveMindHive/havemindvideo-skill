@@ -73,6 +73,31 @@ output = replicate.run(model, input={
 })
 ```
 
+## seedance (`bytedance/seedance-*`) — the cheap workhorse
+
+ByteDance's Seedance family is on Replicate, billed per second of output, scaled by resolution (prices checked 11-01-2026; re-check the model page before a big batch):
+
+| Model | Price / sec of output | Notes |
+|---|---|---|
+| `bytedance/seedance-1-pro-fast` | $0.015 (480p) · $0.025 (720p) · $0.06 (1080p) | Cheapest good-motion option. 2–12 s. |
+| `bytedance/seedance-1-lite` | from ~$0.018 | Older, cheap. |
+| `bytedance/seedance-2.0-fast` | ~$0.07–0.17 (480p / 720p, with or without audio) | Generates its own audio (`generate_audio`, default true). Accepts `last_frame_image`, `reference_images`, `reference_audios`, `reference_videos`. Up to 15 s. |
+| `bytedance/seedance-2.0`, `-2.0-mini`, `-1.5-pro`, `-2.5` | varies | Check the page. |
+
+Input keys (1-pro-fast and 2.0-fast): `prompt`, `image` (start frame, makes it image-to-video), `duration` (int seconds), `resolution`, `aspect_ratio` (`16:9`, `9:16`, `1:1`, …), `seed`. 1-pro-fast also has `camera_fixed`.
+
+```python
+out = replicate.run("bytedance/seedance-1-pro-fast", input={
+    "prompt": "slow push-in on hands turning a tarot card, candlelight",
+    "image": open("start.png", "rb"),   # optional: image-to-video
+    "duration": 5, "resolution": "480p", "aspect_ratio": "9:16",
+})
+```
+
+**Spend pattern:** preview a shot at 480p (5 s on 1-pro-fast ≈ $0.08), and only render the approved take at 720p/1080p. Turn `generate_audio` off on 2.0-fast when the audio is going to be replaced by a VO and music bed anyway.
+
+**Other providers checked (11-01-2026):** Muapi.ai (the gateway behind the open-source "Open Higgsfield" studio UI) lists Seedance/Kling a few cents cheaper "per generation", but doesn't publish the seconds per generation, so the savings are unverified and too small to justify a second account. ElevenLabs Image & Video offers Seedance 2, but not in the United States.
+
 ## Other video models worth knowing
 
 - **`minimax`** — set `prompt_optimizer: True` in the input to let the model rewrite/improve your prompt before generating.
@@ -100,3 +125,12 @@ Check the resolution/aspect ratio matches what you expected (especially after a 
 - For anything where an object appears or moves between hands, use a start AND end image (see `character-consistency.md`) and put "must not change" statements for nearby objects in the prompt.
 - A single static two-shot reference makes the characters over-animate (a character meant to sit sheepish and still grinned and gestured). State each character's intended stillness or emotion explicitly in the prompt.
 - Text-only B-roll with no people (crystal ball, candles, doorway) works well in text-to-video; set `aspect_ratio` explicitly since no start image sets it.
+
+## Notes from a paper cut-out short (10-21-2026)
+
+- **Pin versions for non-default models.** `meta/musicgen` (music beds) returned 404 as `replicate.run("meta/musicgen", ...)`; `replicate.run("meta/musicgen:<version id>", ...)` worked (`stereo-large`, `output_format` wav, 30 s max per call; loop with crossfades for longer).
+- **`google/nano-banana`** (`prompt`, `image_input`, `aspect_ratio`, `output_format`) with the locked style image as `image_input` kept two figures on-model across 17 shots.
+- **Kling image-to-video** field names on `kwaivgi/kling-v2.5-turbo-pro` were `start_image`, `end_image`, `image`, `prompt`, `duration`, `aspect_ratio`, `guidance_scale`, `negative_prompt`. Output was 1088x1904 at 24 fps; cover-crop to 1080x1920 in the conform step.
+- **Run clips in parallel** (`xargs -P5`), look at a contact sheet, regenerate only the failures, and version outputs (`_v2`, `_v3`) instead of overwriting.
+- **Two takes with the same artifact means change the reference still, not the prompt** (thread turning into a wire, smiles appearing on faceless figures).
+- Full workflow: `paper-cutout-narration.md`.

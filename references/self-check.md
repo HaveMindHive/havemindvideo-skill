@@ -77,3 +77,22 @@ Generate in small batches, look at the result, then scale. Do not launch a full-
 - Whisper `small` invents repeated lines at the end of a file and over music (it "heard" an earlier line again after the voice-over). Do not report an artifact from it. Re-run `medium` on a short isolated segment, once per channel (`pan=mono|c0=c0`, then `c1`).
 - A user may hear something the transcript does not show (a Fairlight bus feeding the master, a bad render). If a stem reconstruction (bed + voice-over aligned, best-fit gain, subtract from the render) shows nothing extra, say so plainly, list what was checked, and point at the Fairlight bus routing instead of guessing.
 - Loudness per second (`ebur128`) and a `showspectrumpic` image of the last 15 seconds are quick sanity views.
+
+## Check the RENDER against the script (10-21-2026)
+
+Transcribe the final rendered file, not just the source clips, and diff it against the script:
+
+```python
+import whisper, re, difflib, subprocess
+subprocess.run(["ffmpeg","-y","-v","error","-i","render.mp4","-vn","-ac","1","-ar","16000","/tmp/r.wav"],check=True)
+r = whisper.load_model("medium").transcribe("/tmp/r.wav", language="en", fp16=False, condition_on_previous_text=False)
+norm = lambda s: re.sub(r"[^a-z0-9 ]","",s.lower().replace("-"," ")).split()
+a, b = norm(script_text), norm(r["text"])
+sm = difflib.SequenceMatcher(None, a, b); print(round(sm.ratio(), 4))
+for tag,i1,i2,j1,j2 in sm.get_opcodes():
+    if tag != "equal": print(tag, a[i1:i2], b[j1:j2])
+```
+
+Expect a few harmless differences (a spoken letter written as a word, a coined compound split in two). A block of unrelated words means the render is carrying stale or wrong audio: in one project this was an old narration served from a regenerated file at the same path (`davinci-resolve.md`). Fix by renaming the file, not by re-rendering.
+
+Also scan every generated still and clip contact sheet for invented text (ruler and clock numerals, printed box labels). See `paper-cutout-narration.md`.

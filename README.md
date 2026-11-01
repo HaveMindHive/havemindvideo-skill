@@ -26,7 +26,11 @@ Not a one-shot "generate a video from a prompt" tool — there is no such thing 
 
 ## Getting started
 
-1. Clone this repo (or add it as a Claude Code skill directory — see `SKILL.md`).
+1. Install it as a Claude Code skill on any machine:
+   ```bash
+   git clone https://github.com/HaveMindHive/havemindvideo-skill ~/.claude/skills/havemindvideo
+   ```
+   Update later with `git -C ~/.claude/skills/havemindvideo pull`. Restart Claude Code and it shows up as `havemindvideo`.
 2. Set `REPLICATE_API_TOKEN` and whichever voice credentials you're using.
 3. Read `SKILL.md` — it's the entry point and walks through the whole pipeline phase by phase, linking out to the `references/` docs that matter at each step.
 4. Start a project: a script/concept, a target aspect ratio and duration, and let the pipeline build out a `shotlist.json` manifest as it goes.

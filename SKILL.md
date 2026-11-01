@@ -21,6 +21,10 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
 7. **Edit passes do only the precise thing asked.** When the user says "cut this clip", cut that clip and nothing else, then render. Audio levels and transitions are a separate pass the user will request. Never improvise extra fades, dissolves, trims, or mix changes inside a cut pass. Keep a plain layout script so a cut is a one-line change and a rebuild reproduces every other decision exactly. See `references/davinci-resolve.md` (Cut-pass workflow).
 8. **Verify audio with the right tools.** Whisper `small` hallucinates repeated lines over music and at file ends. Check the tail with `medium` on an isolated segment, per channel, and reconstruct the expected mix from the stems when a user reports an artifact. See `references/self-check.md`.
 
+9. **Never overwrite a media file in place, and always check the rendered file against the script.** Resolve serves stale audio and video for a regenerated file at the same path. Name files by content or version, and transcribe the render. See `references/davinci-resolve.md` and `references/self-check.md`.
+10. **Image and video models invent text. Real words go on afterward as overlays.** Check every still and clip for numerals and labels. See `references/paper-cutout-narration.md`.
+11. **Do not impose a runtime the user did not ask for, and do not clone a named real person's voice.** Let narration set the length; pick a stock voice in the same register instead. See `references/paper-cutout-narration.md` and `references/voices.md`.
+
 ## Before you start
 
 1. Confirm what's available: `REPLICATE_API_TOKEN`, and at least one voice option (`ELEVENLABS_API_KEY`, Google TTS credentials, or the local fallback in `references/voices.md` — local works with zero API keys, good for a first dry run).
@@ -53,7 +57,7 @@ For shots with 2+ characters, or any shot whose pose/composition differs meaning
 
 ### 4. Generate video per shot
 
-Use `references/replicate-video.md` for exact model IDs, parameters, and the specific bugs already found and fixed (duration must be an int, aspect_ratio is silently ignored once a reference image is set so set it explicitly when there isn't one, pass images as open file handles not base64, kling supports a `start_image`+`end_image` pair for better motion control on two-shots).
+Use `references/replicate-video.md` for exact model IDs, parameters, and the specific bugs already found and fixed (duration must be an int, aspect_ratio is silently ignored once a reference image is set so set it explicitly when there isn't one, pass images as open file handles not base64, kling supports a `start_image`+`end_image` pair for better motion control on two-shots). For cheap b-roll and previews, `bytedance/seedance-1-pro-fast` at 480p costs about $0.08 per 5 s clip; render only the approved take at full resolution.
 
 After each generation, run the automated checks in `references/self-check.md` (`scripts/qa_check.py`) before moving to the next shot: correct aspect ratio, correct duration, no obvious garbled on-screen text, and — for multi-character shots — a quick visual check that both characters are actually present and distinguishable. Catching a wrong-character generation here costs one regeneration; catching it after lipsync and timeline placement costs the whole chain redone.
 
@@ -92,7 +96,7 @@ If the same specific failure happens 3+ times in a row (e.g. a character's age k
 ## Reference index
 
 - `references/character-consistency.md` — the core lesson: locking identity across generations, when to use identity-lock models vs. prompting, multi-character scenes
-- `references/replicate-video.md` — Kling and other video models, exact params, known bugs and fixes
+- `references/replicate-video.md` — Kling, Seedance, and other video models, exact params, known bugs and fixes
 - `references/replicate-image.md` — flux models, image-to-image refinement, identity-lock models in depth
 - `references/voices.md` — ElevenLabs / Google / local voice generation tiers
 - `references/lipsync.md` — real lipsync paths and the audio-stream verification step
@@ -102,3 +106,4 @@ If the same specific failure happens 3+ times in a row (e.g. a character's age k
 - `references/remotion.md` — burned-in captions, title/end cards, and overlays driven straight from the shot-list manifest
 - `references/self-check.md` — the automated QA checks run between every phase
 - `references/shotlist-format.md` — the manifest schema that drives the whole pipeline
+- `references/paper-cutout-narration.md` — narration-only illustrated shorts (no lipsync): style lock, text as overlays, Whisper-verified voiceover, phrase captions, torn-paper wipes, baked sound bed, final checks. Helper scripts in `scripts/paper-cutout/`
