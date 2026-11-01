@@ -66,6 +66,21 @@ Each `*_status` field tracks where that piece of the shot is, so re-running the 
 - A shot with dialogue doesn't count as done until `lipsync_status: verified`, not merely `merged` — merged-but-unverified means the audio-stream check hasn't run yet and the file shouldn't be trusted.
 - `reference_image` for a multi-character shot is a dedicated image for *that shot*, never another shot's reference path reused — if you find yourself about to write the same `reference_image` path into two different shots with different `action` text, stop and generate a proper one instead.
 
+## Lock one camera "look" per project
+
+Pick the camera wording once, store it at the top of the manifest (e.g. `"look": "shot on a full-frame digital cinema camera, warm-toned cinema prime lens, 35mm natural cinematic perspective, f/1.4 shallow depth of field"`), and append that exact string to every image and video prompt. Changing lens or film-stock words between shots makes clips that don't cut together. Vary only per-shot framing (wide / medium / close-up) and focal length when the shot needs it.
+
+Phrase menu (adapted from the camera controls in the MIT-licensed Open Higgsfield AI project):
+
+| Choice | Phrases |
+|---|---|
+| Camera | full-frame digital cinema camera · Super 35 studio digital camera · large-format digital cinema camera · classic 16mm film camera · grand format 70mm film camera |
+| Lens | premium modern prime · warm-toned cinema prime · vintage prime · 1970s cinema prime · classic anamorphic · compact anamorphic · swirl bokeh portrait lens · ultra-sharp clinical prime · extreme macro · halation diffusion filter · creative tilt lens effect |
+| Focal length | 8mm ultra-wide · 14mm wide-angle · 24mm wide-angle dynamic · 35mm natural cinematic · 50mm standard portrait · 85mm classic portrait |
+| Aperture | f/1.4 shallow depth of field, creamy bokeh · f/4 balanced depth of field · f/11 deep focus, sharp foreground to background |
+
+Skip generic filler like "8K, ultra-detailed, professional photography". It doesn't steer the video models and eats prompt length.
+
 ## Dialogue pacing: check word count against duration before generating anything
 
 Natural spoken English runs roughly **2.5 words per second**. Before generating voice or video for a dialogue shot, check the line against its `duration_s`:
