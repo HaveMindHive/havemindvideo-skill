@@ -2,6 +2,8 @@
 
 Three tiers: paid cloud (ElevenLabs), paid cloud fallback (Google), free local (Chatterbox/Bark). Pick based on budget, voice-library needs, and whether contributors have API keys.
 
+**No ElevenLabs key? You can still do voices.** With only `REPLICATE_API_TOKEN`: ElevenLabs preset voices via `elevenlabs/v3` on Replicate, or `resemble-ai/chatterbox` on Replicate (see "No-ElevenLabs path on Replicate" and "Replicate ElevenLabs preset voices" below). With no key at all: `edge-tts` (free Microsoft neural voices, `pip install edge-tts`, `edge-tts --list-voices`, `edge-tts --voice en-US-AriaNeural --text "..." --write-media line.mp3`; used in production for finished avatar ads). Never tell the user voices are unavailable while any of these work.
+
 ## 1. ElevenLabs API (TTS only — not the Avatar/Lip Sync workspace)
 
 This is pure text-to-speech. For actual lip-synced video generation, see `lipsync.md` — that's a different, separate ElevenLabs product (their Image & Video / Avatar workspace), not this API.

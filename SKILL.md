@@ -27,7 +27,7 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
 
 ## Before you start
 
-1. Confirm what's available: `REPLICATE_API_TOKEN`, and at least one voice option (`ELEVENLABS_API_KEY`, Google TTS credentials, or the local fallback in `references/voices.md` — local works with zero API keys, good for a first dry run).
+1. Confirm what's available: `REPLICATE_API_TOKEN`, and at least one voice option. **`REPLICATE_API_TOKEN` alone is a voice option** — ElevenLabs preset voices (`elevenlabs/v3`) and `resemble-ai/chatterbox` both run on Replicate (`references/voices.md`). `ELEVENLABS_API_KEY`, Google TTS, `edge-tts` (free, no key) and local Chatterbox/Bark are the others. A missing ElevenLabs key is never a reason to say voices can't be done.
 2. Confirm DaVinci Resolve is installed and running if the deliverable needs assembly (`references/davinci-resolve.md` has the MCP setup). If it's not available, the pipeline still produces correct individual clips + a manifest; assembly can happen later or by hand.
 3. **Ask the user for the aspect ratio and target duration before generating anything** — this determines `aspect_ratio` on every generation call and is expensive to fix after the fact (a session this skill was built from generated 3 shots in the wrong aspect ratio because this wasn't locked down first).
 
