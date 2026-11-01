@@ -73,6 +73,21 @@ output = replicate.run(model, input={
 })
 ```
 
+## Which model when (11-01-2026)
+
+Ranking source: Arena.ai image-to-video leaderboard, 09-21-2026. Seedance 2.0 is #5 (1475) and Seedance 2.5 #4; Kling 3.0 Pro is #19 (1354), Kling 2.5 Turbo #27, Seedance 1.0 Pro #28. Kling 4.0 is not ranked yet.
+
+| Job | Model | Why |
+|---|---|---|
+| Previews, drafts, b-roll | `bytedance/seedance-1-pro-fast` at 480p | About as good as Kling 2.5 Turbo for a fraction of the price |
+| Final hero take | `bytedance/seedance-2.0` at 720p/1080p | Ranks far above every Kling on the leaderboard |
+| Character dialogue from one image + audio | `kwaivgi/kling-avatar-v2` (pro) | Holds pose/gaze; Seedance has no avatar/lipsync |
+| Copy a movement from a reference video | `kwaivgi/kling-v3-motion-control` | Kling-only |
+| Fix lips on an existing clip | `sync/lipsync-2-pro` | See `lipsync.md` |
+| Long single shot (over 15 s), middle keyframes | `kwaivgi/kling-v4.0` | 3–30 s, `start_image`/`middle_images`/`end_image`. Unranked: A/B one shot against Seedance 2 before using it for finals |
+
+Kling 4.0 prices on Replicate: ~$0.094–0.235 per second depending on settings. Kling 3.0 video: ~$0.17–0.42 per second.
+
 ## seedance (`bytedance/seedance-*`) — the cheap workhorse
 
 ByteDance's Seedance family is on Replicate, billed per second of output, scaled by resolution (prices checked 11-01-2026; re-check the model page before a big batch):
@@ -82,7 +97,8 @@ ByteDance's Seedance family is on Replicate, billed per second of output, scaled
 | `bytedance/seedance-1-pro-fast` | $0.015 (480p) · $0.025 (720p) · $0.06 (1080p) | Cheapest good-motion option. 2–12 s. |
 | `bytedance/seedance-1-lite` | from ~$0.018 | Older, cheap. |
 | `bytedance/seedance-2.0-fast` | ~$0.07–0.17 (480p / 720p, with or without audio) | Generates its own audio (`generate_audio`, default true). Accepts `last_frame_image`, `reference_images`, `reference_audios`, `reference_videos`. Up to 15 s. |
-| `bytedance/seedance-2.0`, `-2.0-mini`, `-1.5-pro`, `-2.5` | varies | Check the page. |
+| `bytedance/seedance-2.0` | ~$0.08–0.10 (480p) · $0.18–0.22 (720p) · $0.45–0.55 (1080p) · $1–1.25 (4k); higher number appears to be with audio | Best-ranked. Same inputs as 2.0-fast plus 1080p/4k. |
+| `bytedance/seedance-2.0-mini`, `-1.5-pro`, `-2.5` | varies | Check the page. |
 
 Input keys (1-pro-fast and 2.0-fast): `prompt`, `image` (start frame, makes it image-to-video), `duration` (int seconds), `resolution`, `aspect_ratio` (`16:9`, `9:16`, `1:1`, …), `seed`. 1-pro-fast also has `camera_fixed`.
 
