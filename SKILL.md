@@ -77,13 +77,13 @@ Pick one path per `references/lipsync.md`'s decision tree:
 
 ### 7. Assemble in DaVinci Resolve
 
-**No Resolve on this machine?** Don't improvise an edit. Run the ready-made Remotion assembly, which builds the whole cut from `shotlist.json` and checks its own output:
+**No Resolve on this machine?** Don't improvise an edit. Run the ready-made Remotion editor, which cuts the whole video from `shotlist.json` using the basic rules in `references/editing.md` and runs the final-pass checks itself:
 
 ```bash
 python3 scripts/remotion-assemble/assemble.py path/to/shotlist.json --music path/to/bed.mp3   # --music is optional
 ```
 
-Shots go in order with hard cuts, each at its real clip length. A shot's `lipsync_file` keeps its own audio; a shot with only `video_file` + `audio_file` plays the clip muted under that voice file. It refuses to run if a file is missing or a voice line is longer than its clip. Output: `final/<project>_v<N>.0_<MM-DD-YYYY>.mp4` next to the shot list (never overwrites), checked for length and an audio stream. Hand that file over for hand edits in CapCut or any editor. First run does `npm install` (needs Node + ffmpeg). Resolve stays the primary path when it's installed.
+What it does on its own: trims dead air around every line (with a handle, never starting mid-word), hard cuts inside a scene and an 8-frame dissolve where a shot's `scene` changes (the voice stops at the cut, the picture runs under the dissolve), levels every voice to -19 LUFS, ducks one music bed under dialogue and lifts it in silent shots. Break a rule on purpose per shot in the shot list: `"transition_in": "cut" | "dissolve" | <frames>`, `"trim": false` for a held beat, `"keep_level": true` for a whisper. It refuses to run if a file is missing, a lipsync merge has no audio, or a line is longer than its clip. Output: `final/<project>_v<N>.0_<MM-DD-YYYY>.mp4` (never overwrites) plus a contact sheet, a Whisper transcript (any shot whose line wasn't heard is flagged `CHECK LINE`), black-frame and loudness readouts, and the `.edit.json` of what was cut. Read those, watch the file once, then hand it over for hand edits in CapCut. First run does `npm install` (needs Node + ffmpeg). Resolve stays the primary path when it's installed.
 
 
 Follow `references/davinci-resolve.md`. Set the project's resolution/frame rate explicitly to match what was decided before phase 1. Build bins, import the approved assets (not the discarded regeneration attempts — rename or prefix those clearly instead of leaving a media pool full of ambiguous filenames), place clips on the timeline in order, place the matching audio aligned under each clip.

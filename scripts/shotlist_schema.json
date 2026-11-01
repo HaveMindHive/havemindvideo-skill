@@ -34,6 +34,10 @@
           "reference_status": {
             "enum": ["pending", "generated", "approved", "rejected"]
           },
+          "scene": { "type": ["string", "null"], "description": "Same scene hard-cuts; a change gets a dissolve (no-Resolve editor)" },
+          "transition_in": { "type": ["string", "integer", "null"], "description": "'cut', 'dissolve', or dissolve frames into this shot" },
+          "trim": { "type": "boolean", "description": "false keeps the clip's full length (a held beat)" },
+          "keep_level": { "type": "boolean", "description": "true skips voice levelling (a whisper stays quiet)" },
           "video_file": { "type": ["string", "null"] },
           "video_status": {
             "enum": ["pending", "generated", "qa_passed", "qa_failed"]
