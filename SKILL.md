@@ -77,6 +77,15 @@ Pick one path per `references/lipsync.md`'s decision tree:
 
 ### 7. Assemble in DaVinci Resolve
 
+**No Resolve on this machine?** Don't improvise an edit. Run the ready-made Remotion assembly, which builds the whole cut from `shotlist.json` and checks its own output:
+
+```bash
+python3 scripts/remotion-assemble/assemble.py path/to/shotlist.json --music path/to/bed.mp3   # --music is optional
+```
+
+Shots go in order with hard cuts, each at its real clip length. A shot's `lipsync_file` keeps its own audio; a shot with only `video_file` + `audio_file` plays the clip muted under that voice file. It refuses to run if a file is missing or a voice line is longer than its clip. Output: `final/<project>_v<N>.0_<MM-DD-YYYY>.mp4` next to the shot list (never overwrites), checked for length and an audio stream. Hand that file over for hand edits in CapCut or any editor. First run does `npm install` (needs Node + ffmpeg). Resolve stays the primary path when it's installed.
+
+
 Follow `references/davinci-resolve.md`. Set the project's resolution/frame rate explicitly to match what was decided before phase 1. Build bins, import the approved assets (not the discarded regeneration attempts — rename or prefix those clearly instead of leaving a media pool full of ambiguous filenames), place clips on the timeline in order, place the matching audio aligned under each clip.
 
 **Verify the actual timeline, don't just trust that the API calls succeeded.** Use `timeline_frame.capture` to look at real frames at a few points across the edit — confirm the right character/content is actually there, confirm the aspect ratio looks right in context, confirm there's no silent gap. A file-overwrite-in-place gotcha in `references/davinci-resolve.md` caused a fully "correct" set of files to render as corrupted inside Resolve in the session this skill was built from — it looked fine from the API's perspective and was wrong on screen.

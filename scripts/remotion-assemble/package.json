@@ -1,0 +1,11 @@
+{
+  "name": "havemindvideo-remotion-assemble",
+  "private": true,
+  "scripts": { "studio": "remotion studio src/index.ts" },
+  "dependencies": {
+    "@remotion/cli": "4.0.530",
+    "remotion": "4.0.530",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  }
+}
