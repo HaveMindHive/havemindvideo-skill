@@ -1,6 +1,6 @@
 # Lipsync — Getting Real Synced Dialogue
 
-**Read this before generating any shot with spoken dialogue.** Getting this wrong is the single most expensive mistake in AI video production — it means regenerating every dialogue shot after the fact.
+**Read this before generating any shot with spoken dialogue.** The current proven recipe (closed-mouth start picture → Kling 3 pro acting clip → `sync/lipsync-2-pro` at temperature 0.3, WAV with lead-in/tail padding) is in SKILL.md, "Proven pipeline for talking close-ups". A silent acting clip is never a finished take: open takes only through `scripts/review_open.py`, which refuses dialogue clips with no audio. Getting this wrong is the single most expensive mistake in AI video production — it means regenerating every dialogue shot after the fact.
 
 ## The core fact
 

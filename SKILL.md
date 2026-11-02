@@ -1,6 +1,6 @@
 ---
 name: havemindvideo
-description: Produce a finished, lip-synced, multi-character video ad or short from a script — Replicate for images/video, ElevenLabs/Google/local for voice, DaVinci Resolve for assembly. Use when asked to make an AI video, ad, or short-form clip with consistent characters and real dialogue, not just a single one-off generation.
+description: Produce a finished, lip-synced, multi-character video ad or short from a script. Replicate for images, video, voices and lip-sync (no ElevenLabs key needed), Remotion assembly (DaVinci Resolve optional). Use for ANY step of making an AI video, ad or short with consistent characters and real dialogue, including resuming a project mid-way (re-invoke it every session).
 ---
 
 # HAVEMINDVIDEO
@@ -9,10 +9,46 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
 
 **The one rule that matters most: never reuse a generic reference image across unrelated shots, and never trust a generation without checking it before building on it.** Everything else below exists to enforce that rule automatically instead of relying on remembering it.
 
+## Working rules (Turaq, 11-02-2026): read these first, every session
+
+- **Invoke this skill at the start of every session that touches a video, and re-read the
+  phase's reference before doing that phase** (`lipsync.md` before any lip-sync, `editing.md`
+  before assembly). Use the scripts here instead of improvising new ones.
+- **Only show finished takes.** A dialogue shot is reviewable only after lip-sync, with an
+  audio stream. Open every take with `scripts/review_open.py <shotlist> <shot_id> <clip> [label]`:
+  it refuses silent dialogue clips and opens a copy labeled `SHOT 13 - <line> - <label>.mp4` in
+  QuickTime. Never open a silent acting base for review.
+- **Project state lives on disk, not in chat memory.** Keep `STATUS.md` (right now, shot table,
+  what's next) next to `shotlist.json`; read both at the start of a session, update both after
+  every change.
+- **Look at small pictures.** Downscale to 512px and tile several frames in one sheet before
+  viewing; full-size frames bloat the chat until it can't reopen.
+- **Don't wait inside one turn on a long render.** Start it in the background (log the
+  prediction id), tell the person, end the turn, check when they write again.
+- **Independent shots may render in parallel.** Replicate rate-limits bursts (HTTP 429): retry
+  after a few seconds. HTTP 402 = out of credit; say so plainly and stop.
+- **Quality over cost.** No per-call prices or running tally; only flag something unusually
+  expensive or a switch to a much pricier model.
+- **Videos and audio auditions open in QuickTime Player**, never a browser page.
+
+## Proven pipeline for talking close-ups (Stop Swiping, 11-02-2026)
+
+1. Start picture with the mouth **closed** (edit the approved still: "change ONLY her mouth:
+   lips gently closed, soft smile, no teeth"). A toothy start picture gives toothy, unnatural
+   lip-sync.
+2. Acting clip: `kwaivgi/kling-v3-video`, `mode: pro`, `generate_audio: false`, duration just
+   over the line. Prompt the performance (eyes, head, small relaxed mouth movements); negative
+   prompt "big toothy grin, wide open mouth, lighting change, extra fingers".
+3. Voice as WAV, ~0.6 s silence before the line and ~0.8 s after (the model fumbles first and
+   last words at clip edges).
+4. Mouth: `sync/lipsync-2-pro`, `temperature: 0.3`, `sync_mode: cut_off`.
+5. Check: audio stream present, 512px mouth-crop sheet across the clip, Whisper the words. Then
+   `review_open.py`.
+
 ## Hard-won rules (added after a 16-shot production)
 
 1. **One reference image per frame**, describing the scene and the framing, plus a scene reference so the set stays consistent. See `references/character-consistency.md`.
-2. **Confirm voices with the user** before generating a whole script; build an audition page. Never take a handoff note's word for which voice was chosen. See `references/voices.md`.
+2. **Confirm voices with the user** before generating a whole script; numbered audition files opened in QuickTime. Never take a handoff note's word for which voice was chosen. See `references/voices.md`.
 3. **Prefer single-face dialogue shots.** Lipsync on a two-person frame can animate the wrong person; `active_speaker` does not reliably fix it. See `references/lipsync.md`.
 4. **Review contact sheets, not first frames**, and pilot one shot of each type before batching the rest. See `references/self-check.md`.
 5. **Scope fixes to the scene that has the problem.** A note about one shot is not a verdict on the whole character, voice, or approach; keep what works, reuse approved assets, and redo only what changed.
@@ -28,7 +64,7 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
 ## Before you start
 
 1. Confirm what's available: `REPLICATE_API_TOKEN`, and at least one voice option. **`REPLICATE_API_TOKEN` alone is a voice option** — ElevenLabs preset voices (`elevenlabs/v3`) and `resemble-ai/chatterbox` both run on Replicate (`references/voices.md`). `ELEVENLABS_API_KEY`, Google TTS, `edge-tts` (free, no key) and local Chatterbox/Bark are the others. A missing ElevenLabs key is never a reason to say voices can't be done.
-2. Confirm DaVinci Resolve is installed and running if the deliverable needs assembly (`references/davinci-resolve.md` has the MCP setup). If it's not available, the pipeline still produces correct individual clips + a manifest; assembly can happen later or by hand.
+2. Assembly: the default is the Remotion editor (`scripts/remotion-assemble/assemble.py`, phase 7). DaVinci Resolve is optional (`references/davinci-resolve.md`); the Macs here don't have it.
 3. **Ask the user for the aspect ratio and target duration before generating anything** — this determines `aspect_ratio` on every generation call and is expensive to fix after the fact (a session this skill was built from generated 3 shots in the wrong aspect ratio because this wasn't locked down first).
 
 ## Pipeline
