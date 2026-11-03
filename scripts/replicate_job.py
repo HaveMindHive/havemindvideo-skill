@@ -33,39 +33,52 @@ def _req(url, data=None, method=None, timeout=60):
     raise SystemExit("FAILED: Replicate unreachable after retries")
 
 
-def run(model, inp, limit_s=600, queue_limit_s=300, tries=2, poll_s=6, log=print):
+def _print(msg):
+    print(msg, flush=True)
+
+
+def run(model, inp, limit_s=600, queue_limit_s=300, tries=2, poll_s=6, log=_print):
     """Return the output URL. Cancels and retries a job that waits in queue longer than
     queue_limit_s or runs longer than limit_s; gives up after `tries` attempts."""
     last = "unknown"
     for n in range(1, tries + 1):
         p = _req(f"{API}/models/{model}/predictions", {"input": inp}, timeout=180)
-        log(f"started {p['id']} ({model}, try {n}/{tries})", flush=True)
-        t0 = time.time(); started = None
+        log(f"started {p['id']} ({model}, try {n}/{tries})")
+        t0 = time.time(); started = None; poll_fail = 0
         while p["status"] not in ("succeeded", "failed", "canceled"):
             time.sleep(poll_s)
-            try:
-                p = _req(p["urls"]["get"], timeout=30)
-            except SystemExit:
-                continue
             now = time.time()
-            if p["status"] == "processing" and started is None:
-                started = now
+            # limits are checked every loop, even while polling is failing
             if (started is None and now - t0 > queue_limit_s) or (started and now - started > limit_s):
                 why = "stuck in queue" if started is None else f"running over {limit_s // 60} min"
                 try:
-                    _req(p["urls"]["cancel"], {}, method="POST", timeout=30)
+                    p = _req(p["urls"]["cancel"], {}, method="POST", timeout=30)
                 except SystemExit:
-                    pass
-                log(f"canceled {p['id']}: {why} (Replicate is slow right now)", flush=True)
+                    try:
+                        p = _req(p["urls"]["get"], timeout=30)  # cancel failed: see where it really is
+                    except SystemExit:
+                        pass
+                if p.get("status") == "succeeded":
+                    break  # it finished just in time: use it, don't pay again
+                log(f"canceled {p.get('id')}: {why} (Replicate is slow right now)")
                 last = why; p = {"status": "canceled"}
                 break
+            try:
+                p = _req(p["urls"]["get"], timeout=30); poll_fail = 0
+            except SystemExit as e:
+                poll_fail += 1
+                if poll_fail >= 5:
+                    sys.exit(f"FAILED: can't check the job ({e}); stopped after 5 tries. Job id {p.get('id')}")
+                continue
+            if p["status"] == "processing" and started is None:
+                started = time.time()
         if p["status"] == "succeeded":
             out = p["output"] if isinstance(p["output"], str) else p["output"][0]
-            log(f"done {p['id']} | predict_time {p.get('metrics', {}).get('predict_time')}", flush=True)
+            log(f"done {p['id']} | predict_time {p.get('metrics', {}).get('predict_time')}")
             return out
         if p["status"] == "failed":
             last = str(p.get("error"))[:300]
-            log(f"failed {p.get('id')}: {last}", flush=True)
+            log(f"failed {p.get('id')}: {last}")
             if "invalid" in last.lower() or "E006" in last:
                 break  # bad input: retrying the same input won't help
     sys.exit(f"FAILED after {n} tries: {last}")

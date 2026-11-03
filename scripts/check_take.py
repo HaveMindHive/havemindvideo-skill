@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Check ONE take before anyone sees it. Free, local, ~20-40 s.
 
-    python3 check_take.py <shotlist.json> <shot_id> <clip.mp4> [--frames 12]
+    python3 check_take.py <shotlist.json> <shot_id> <clip.mp4> [--frames 12] [--allow-cuts]
 
 Prints PASS/FAIL lines and writes a small (<=1024 px wide) contact sheet next to the clip:
 <clip>.sheet.png. Look at that sheet (it's small enough to view) against the shot's numbered
@@ -25,14 +25,25 @@ def probe(p):
     return json.loads(r.stdout or "{}")
 
 
+STOP = {"a", "an", "the", "to", "of", "and", "i", "is", "it", "at", "on", "in", "for", "with", "you"}
+
+
 def words(t):
-    return re.findall(r"[a-z']+", re.sub(r"\[[^\]]*\]", " ", (t or "").lower()))
+    """Normalized content words: no [stage tags], punctuation, apostrophes; 'dot com' == '.com'."""
+    t = re.sub(r"\[[^\]]*\]", " ", (t or "").lower())
+    t = re.sub(r"\.com\b", " com", t).replace(" dot com", " com").replace("'", "")
+    t = re.sub(r"[^a-z0-9 ]+", " ", t)
+    out = []
+    for w in t.split():
+        out += [w[:-len("com")], "com"] if w.endswith("com") and len(w) > 6 and w != "com" else [w]
+    return [w for w in out if w and w not in STOP]
 
 
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("shotlist"); ap.add_argument("shot_id"); ap.add_argument("clip")
     ap.add_argument("--frames", type=int, default=12)
+    ap.add_argument("--allow-cuts", action="store_true", help="shot has intended edits (cut to a screen recording, speed change): report jumps, don't fail")
     a = ap.parse_args()
     root = Path(a.shotlist).resolve().parent
     shots = json.load(open(a.shotlist))["shots"]
@@ -66,8 +77,13 @@ def main():
                 txt = next(Path(td).glob("*.txt"), None)
                 heard = words(txt.read_text()) if txt else []
             want = words(line)
-            hit = sum(1 for w in want if w in heard) / max(1, len(want))
-            res(hit >= 0.7, f"Whisper heard {hit:.0%} of the line: \"{' '.join(heard)[:120]}\"")
+            blob = ''.join(heard)  # 'celestiaoraclecoms' still contains 'celestia' and 'oracle'
+            hit = sum(1 for w in want if w in heard or w in blob) / max(1, len(want))
+            msg = f"Whisper heard {hit:.0%} of the line: \"{' '.join(heard)[:120]}\""
+            if len(want) < 4:
+                print("INFO (short line, listen yourself) " + msg)  # Whisper is unreliable on 1-3 words / sighs
+            else:
+                res(hit >= 0.7, msg)
     else:
         print(f"INFO no dialogue; duration {dur:.1f}s")
 
@@ -80,7 +96,10 @@ def main():
     if diffs:
         med = sorted(diffs)[len(diffs) // 2] or 0.5
         spikes = [(i / 12, d) for i, d in enumerate(diffs) if d > max(4 * med, 6)]
-        res(not spikes, "no sudden jumps" if not spikes else "JUMP at " + ", ".join(f"{t:.1f}s" for t, _ in spikes[:5]) + " (snap/glitch/cut: look at it)")
+        if spikes and a.allow_cuts:
+            print("LOOK jumps at " + ", ".join(f"{t:.1f}s" for t, _ in spikes[:5]) + " (intended cuts? confirm each one)")
+        else:
+          res(not spikes, "no sudden jumps" if not spikes else "JUMP at " + ", ".join(f"{t:.1f}s" for t, _ in spikes[:5]) + " (snap/glitch/cut: look at it)")
         # Expression "snaps" (a fast pose change into an end frame) are too close to normal motion
         # to auto-fail (Stop Swiping 13 v7 snap 2.5x vs approved v8 2.0x). Point the reviewer at it.
         w = [sum(diffs[i:i + 6]) for i in range(max(1, len(diffs) - 5))]
@@ -93,7 +112,7 @@ def main():
     sheet = clip.with_suffix(".sheet.png")
     n = a.frames
     sh("ffmpeg", "-v", "error", "-y", "-i", str(clip), "-vf",
-       f"fps={n / max(dur, 0.1):.4f},scale=256:-2,tile={min(n, 6)}x{(n + 5) // 6}", "-frames:v", "1", str(sheet))
+       f"fps={n / max(dur, 0.1):.4f},scale=170:-2,tile={min(n, 6)}x{(n + 5) // 6}", "-frames:v", "1", str(sheet))
     print(f"SHEET {sheet}  (view it; check the shot's numbered checklist)")
     print("RESULT", "PASS" if ok else "FAIL")
     sys.exit(0 if ok else 1)
