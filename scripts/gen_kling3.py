@@ -9,7 +9,7 @@ out, img, prompt = sys.argv[1:4]
 dur = int(sys.argv[4]) if len(sys.argv) > 4 else 5
 inp = {"start_image": data_uri(img), "prompt": prompt, "duration": dur, "aspect_ratio": "9:16", "mode": "pro",
        "generate_audio": False,
-       "negative_prompt": os.environ.get("NEG", "blur, lighting change, talking, text, subtitles, extra people, distorted hands, extra fingers")}
+       "negative_prompt": os.environ.get("NEG", "extra people, extra fingers, face morph, lighting change, camera movement, subtitles, text")}
 if len(sys.argv) > 6 and sys.argv[6]:
     inp["end_image"] = data_uri(sys.argv[6])
 download(run("kwaivgi/kling-v3-video", inp, limit_s=int(os.environ.get("KLING_LIMIT_S", 600))), out)

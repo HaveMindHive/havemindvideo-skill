@@ -31,6 +31,17 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
   expensive or a switch to a much pricier model.
 - **Videos and audio auditions open in QuickTime Player**, never a browser page.
 
+## Before ANY paid video render: read references/prompting.md (11-02-2026)
+- It has the pre-flight checklist for start/end pictures, the prompt structure, and the retake
+  rules. Stop Swiping used 90 video renders for 20 keepers; most waste came from unchecked start
+  pictures and from telling Kling "mouth closed / no talking" on clips that get lip-synced
+  (lipsync-2-pro needs natural speaking motion: prompt "speaking naturally", closed mouth only in
+  the start picture).
+- Check every take with `scripts/check_take.py <shotlist> <shot> <clip>` (audio, Whisper, jumps,
+  small contact sheet) before showing it. Fix what fails; never show a take as good unchecked.
+- Renders use `scripts/gen_kling3.py` / `scripts/gen_lipsync2pro.py` (time limits, auto-retry).
+- Long jobs (renders, assembly) run in the background; end the turn; the app wakes you.
+
 ## Proven pipeline for talking close-ups (Stop Swiping, 11-02-2026)
 
 1. Start picture with the mouth **closed** (edit the approved still: "change ONLY her mouth:
