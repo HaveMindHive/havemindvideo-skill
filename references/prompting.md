@@ -7,6 +7,19 @@ kling.md, OSideMedia/higgsfield-ai-prompt-skill, Yuyyxz/kling-prompt-engineering
 VideoVerses/Cuti-Harness, Rylaispirit/cinematic-video-prompt-skill). Post-mortem:
 ~/HaveMindHive/research/stop-swiping-postmortem.md.
 
+## A redo request means the METHOD is suspect (Turaq, 11-02-2026)
+When anyone asks for a redo, or a take fails a check, STOP before spending anything:
+1. Diagnose: what exactly is wrong, and WHY did our process produce it? Assume the recipe, the
+   prompt, the start/end image, or this skill itself may be the cause (Stop Swiping: end images
+   froze the mouth in shots 13 and 16; "mouth closed / no talking" prompts starved the lip-sync;
+   the same mistakes were re-rolled for hours).
+2. Look for a free fix first: an existing take in clips/ (measure it), a trim, a shift, a re-cut,
+   a re-lipsync on an existing base, a library sound instead of a generated one.
+3. Only if a new paid render is truly needed: change the cause (not just the wording), say in one
+   line what you changed and why it will work, then render ONE take (two only if the change is
+   uncertain). Never re-run the same recipe after a failure.
+4. Second failure on the same shot: stop and tell the person what you've learned before trying again.
+
 ## The two mistakes that cost the most
 
 1. **Telling Kling "mouth closed / no talking" on a clip that will be lip-synced.**

@@ -31,6 +31,9 @@ An end-to-end pipeline skill for turning a script into a finished video: locked 
   expensive or a switch to a much pricier model.
 - **Videos and audio auditions open in QuickTime Player**, never a browser page.
 
+## A redo request = the method is suspect. Diagnose and look for a free fix BEFORE any new render
+(references/prompting.md, top section). Never re-run a recipe that just failed.
+
 ## Before ANY paid video render: read references/prompting.md (11-02-2026)
 - It has the pre-flight checklist for start/end pictures, the prompt structure, and the retake
   rules. Stop Swiping used 90 video renders for 20 keepers; most waste came from unchecked start
