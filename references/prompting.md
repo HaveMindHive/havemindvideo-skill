@@ -22,6 +22,12 @@ VideoVerses/Cuti-Harness, Rylaispirit/cinematic-video-prompt-skill). Post-mortem
 ## Pre-flight (before paying for any video)
 Make a 512px sheet of the start (and end) image and check, writing the answers in STATUS.md:
 - [ ] Same person as the locked character (face, hair, outfit)
+- [ ] **Congruent with the shots around it.** Put the start picture in ONE sheet next to the last
+      frame of the shot before and the first frame of the shot after (`ffmpeg ... tile=3x1`,
+      512 px). Same set and background, same lighting direction and color/grade, same wardrobe,
+      hair, nails, jewelry, same props (cup, phone model and case), same time of day, same side of
+      the table / screen direction. Any mismatch: fix the picture (pass the scene reference and the
+      neighbour frame as image inputs) before paying for video. See character-consistency.md.
 - [ ] 5 fingers on every visible hand; hands rest on/hold an object (phone, cup, pot)
 - [ ] Nobody else's head/shoulder/hand intruding; no text on screen except the real phone screen
 - [ ] Mouth: closed and relaxed (talking AND reaction shots)
